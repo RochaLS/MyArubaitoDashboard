@@ -1,7 +1,6 @@
 package com.rocha.MyArubaitoDash.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,10 +15,22 @@ import java.time.LocalTime;
 @Entity
 public class Shift {
     @Id
-    int id;
-    LocalDate startDate;
-    LocalTime startTime;
-    LocalDate endDate;
-    LocalTime endTime;
-    String shiftType;
+    private int id;
+    private LocalDate startDate;
+    private LocalTime startTime;
+    private LocalDate endDate;
+    private LocalTime endTime;
+    private String shiftType;
+
+    //Specifying the sql join to get shifts based on worker and job.
+    @ManyToOne
+    @JoinColumns({
+            @JoinColumn(name = "worker_id"),
+            @JoinColumn(name = "job_id")
+    })
+    private Worker worker;
+
+    @ManyToOne
+    @JoinColumn(name = "job_id")
+    private Job job;
 }

@@ -1,12 +1,12 @@
 package com.rocha.MyArubaitoDash.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 
 @Data
 @AllArgsConstructor
@@ -14,8 +14,14 @@ import java.math.BigDecimal;
 @Entity
 public class Worker {
     @Id
-    int id;
-    BigDecimal hourlyRate;
-    String location;
+    private int id;
+    private BigDecimal hourlyRate;
+    private String location;
+
+    @OneToMany(mappedBy =  "worker", cascade = CascadeType.ALL)
+    private ArrayList<Shift> shifts;
+
+    @OneToMany(mappedBy = "worker", cascade = CascadeType.ALL)
+    private ArrayList<Job> jobs;
 
 }

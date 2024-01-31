@@ -1,10 +1,11 @@
 package com.rocha.MyArubaitoDash.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
 
 @Data
 @AllArgsConstructor
@@ -12,8 +13,16 @@ import lombok.NoArgsConstructor;
 @Entity
 public class Job {
     @Id
-    int id;
-    String title;
+    private int id;
+    private String title;
+
+    @OneToMany(mappedBy = "job", cascade = CascadeType.ALL)
+    private ArrayList<Shift> shifts;
+
+    @ManyToOne
+    @JoinColumn(name = "worker_id")
+    private Worker worker;
+
 }
 
 
