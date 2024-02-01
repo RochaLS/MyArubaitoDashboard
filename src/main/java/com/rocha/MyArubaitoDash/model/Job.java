@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -17,7 +18,7 @@ public class Job {
     private String title;
 
     @OneToMany(mappedBy = "job", cascade = CascadeType.ALL)
-    private ArrayList<Shift> shifts;
+    private List<Shift> shifts;
 
     @ManyToOne
     @JoinColumn(name = "worker_id")

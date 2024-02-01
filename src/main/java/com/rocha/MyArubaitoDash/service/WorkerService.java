@@ -26,39 +26,63 @@ public class WorkerService {
         return null;
     }
 
-    public boolean addWorker(Worker worker) {
+    public void addWorker(Worker worker) {
         try {
             workerRepository.save(worker);
-            System.out.println("Worker with id: " + worker.getId() + "successfully added.");
-            return true;
+            System.out.println("Worker with id: " + worker.getId() + " successfully added.");
         } catch (Exception e) {
             System.out.println("Unexpected Error saving worker");
             e.printStackTrace();
-            return false;
         }
     }
 
-    public boolean updateWorker(Worker updatedWorker) {
+    public void updateWorker(int id, Worker updatedWorker) {
         try {
-            workerRepository.save(updatedWorker);
-            System.out.println("Worker with id: " + updatedWorker.getId() + "successfully updated.");
-            return true;
+            Optional<Worker> workerToBeUpdated = workerRepository.findById(id);
+            if (workerToBeUpdated.isPresent()) {
+                Worker worker = workerToBeUpdated.get();
+
+                // The below conditionals basic which fields are necessary to update...
+                // If we don't do this the fields that are not being updated might be overridden to null.
+                if (updatedWorker.getName() != null) {
+                    worker.setName(updatedWorker.getName());
+                }
+
+                if (updatedWorker.getLocation() != null) {
+                    worker.setLocation(updatedWorker.getLocation());
+                }
+
+                if (updatedWorker.getHourlyRate() != null) {
+                    worker.setHourlyRate(updatedWorker.getHourlyRate());
+                }
+
+
+                workerRepository.save(worker);
+                System.out.println("Worker with id: " + id + " successfully updated.");
+
+            }
+
+
+
         } catch (Exception e) {
-            System.out.println("Unexpected Error updating worker with id: " + updatedWorker.getId());
+            System.out.println("Unexpected Error updating worker with id: " + id);
             e.printStackTrace();
-            return false;
+
         }
     }
 
-    public boolean deleteWorker(Worker workerToBeDeleted) {
+    public void deleteWorker(int id) {
         try {
-            workerRepository.delete(workerToBeDeleted);
-            System.out.println("Worker with id: " + workerToBeDeleted.getId() + "successfully deleted.");
-            return true;
+            Optional<Worker> workerToBeDeletedFound = workerRepository.findById(id);
+            if (workerToBeDeletedFound.isPresent()) {
+                Worker workerToBeDeleted = workerToBeDeletedFound.get();
+                workerRepository.delete(workerToBeDeleted);
+                System.out.println("Worker with id: " + workerToBeDeleted.getId() + " successfully deleted.");
+            }
+
         } catch (Exception e) {
-            System.out.println("Unexpected Error deleting worker with id: " + workerToBeDeleted.getId());
+            System.out.println("Unexpected Error deleting worker with id: " + id);
             e.printStackTrace();
-            return false;
         }
     }
 

@@ -24,10 +24,7 @@ public class Shift {
 
     //Specifying the sql join to get shifts based on worker and job.
     @ManyToOne
-    @JoinColumns({
-            @JoinColumn(name = "worker_id"),
-            @JoinColumn(name = "job_id")
-    })
+    @JoinColumn(name = "worker_id")
     private Worker worker;
 
     @ManyToOne
