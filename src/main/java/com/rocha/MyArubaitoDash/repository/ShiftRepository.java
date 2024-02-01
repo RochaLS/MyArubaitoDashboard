@@ -7,4 +7,5 @@ import java.util.ArrayList;
 
 public interface ShiftRepository extends JpaRepository<Shift, Integer> {
     ArrayList<Shift> findAllByWorkerId(int workerId);
+    ArrayList<Shift> findAllByJobId(int jobId);
 }
