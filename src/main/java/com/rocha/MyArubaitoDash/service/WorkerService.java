@@ -42,7 +42,7 @@ public class WorkerService {
             if (workerToBeUpdated.isPresent()) {
                 Worker worker = workerToBeUpdated.get();
 
-                // The below conditionals basic which fields are necessary to update...
+                // The below conditionals check which fields are necessary to update...
                 // If we don't do this the fields that are not being updated might be overridden to null.
                 if (updatedWorker.getName() != null) {
                     worker.setName(updatedWorker.getName());
@@ -52,9 +52,9 @@ public class WorkerService {
                     worker.setLocation(updatedWorker.getLocation());
                 }
 
-                if (updatedWorker.getHourlyRate() != null) {
-                    worker.setHourlyRate(updatedWorker.getHourlyRate());
-                }
+//                if (updatedWorker.getHourlyRate() != null) {
+//                    worker.setHourlyRate(updatedWorker.getHourlyRate());
+//                }
 
 
                 workerRepository.save(worker);

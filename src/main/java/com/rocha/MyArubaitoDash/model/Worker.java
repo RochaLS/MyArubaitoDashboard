@@ -17,7 +17,6 @@ public class Worker {
     @Id
     private int id;
     private String name;
-    private BigDecimal hourlyRate;
     private String location;
 
 

@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,6 +17,7 @@ public class Job {
     @Id
     private int id;
     private String title;
+    private BigDecimal hourlyRate;
 
     @OneToMany(mappedBy = "job", cascade = CascadeType.ALL)
     private List<Shift> shifts;

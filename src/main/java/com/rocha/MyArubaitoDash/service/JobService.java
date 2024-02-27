@@ -31,35 +31,50 @@ public class JobService {
         }
     }
 
-    public boolean addJob(Job job) {
+    public void addJob(Job job) {
         try {
             jobRepository.save(job);
-            return true;
         } catch (Exception e) {
             System.out.println("Unexpected Error");
             e.printStackTrace();
-            return false;
         }
     }
 
-    public boolean updateJob(Job updatedJob) {
+    public void updateJob(int id, Job updatedJob) {
         try {
-            jobRepository.save(updatedJob);
-            return true;
+            Optional<Job> optionalJob = jobRepository.findById(id);
+
+            if (optionalJob.isPresent()) {
+                Job jobToBeUpdated = optionalJob.get();
+
+                if (updatedJob.getTitle() != null) {
+                    jobToBeUpdated.setTitle(updatedJob.getTitle());
+                }
+
+                if (updatedJob.getHourlyRate() != null) {
+                    jobToBeUpdated.setHourlyRate(updatedJob.getHourlyRate());
+                }
+
+                jobRepository.save(jobToBeUpdated);
+            }
         } catch (Exception e) {
             System.out.println("Unexpected Error");
             e.printStackTrace();
-            return false;
         }
     }
 
-    public boolean deleteJob(Job jobToBeDeleted) {
+    public void deleteJob(int id) {
         try {
-            jobRepository.delete(jobToBeDeleted);
-            return true;
+            Optional<Job> jobToBeDeletedFound = jobRepository.findById(id);
+            if (jobToBeDeletedFound.isPresent()) {
+                Job jobToBeDeleted = jobToBeDeletedFound.get();
+                jobRepository.delete(jobToBeDeleted);
+
+                System.out.println("Job of id: " + jobToBeDeleted.getId() + " deleted!");
+            }
         } catch (Exception e) {
+            System.out.println("Error deleting job.");
             e.printStackTrace();
-            return false;
         }
     }
 }
