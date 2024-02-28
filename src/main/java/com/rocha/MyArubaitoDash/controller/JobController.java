@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/job")
 public class JobController {
@@ -17,6 +19,12 @@ public class JobController {
     @Autowired
     public JobController(JobService jobService) {
         this.jobService = jobService;
+    }
+
+    @GetMapping("/byWorker/{id}")
+    public ResponseEntity<List<Job>> getJobByWorkerId(@PathVariable int id) {
+        List<Job> jobs = jobService.getJobsByWorkerId(id);
+        return ResponseEntity.ok(jobs);
     }
 
     @GetMapping("/{id}")

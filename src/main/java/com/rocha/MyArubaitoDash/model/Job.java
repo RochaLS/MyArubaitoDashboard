@@ -1,5 +1,6 @@
 package com.rocha.MyArubaitoDash.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,6 +25,7 @@ public class Job {
 
     @ManyToOne
     @JoinColumn(name = "worker_id")
+    @JsonIgnore
     private Worker worker;
 
 }
