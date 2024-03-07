@@ -11,10 +11,13 @@ import java.util.Optional;
 public class JobService {
 
     private final JobRepository jobRepository;
+    private final EncryptionService encryptionService;
 
     @Autowired
-    public JobService(JobRepository jobRepository) {
+    public JobService(JobRepository jobRepository, EncryptionService encService) {
+
         this.jobRepository = jobRepository;
+        this.encryptionService = encService;
     }
 
     public ArrayList<Job> getJobsByWorkerId(int workerId) {
