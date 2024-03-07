@@ -17,8 +17,14 @@ import java.util.List;
 public class Job {
     @Id
     private int id;
-    private String title;
-    private BigDecimal hourlyRate;
+    @Transient // Not mapped to db
+    private String title = null;
+    @JsonIgnore
+    private String encryptedTitle;
+    @Transient // Not mapped to db
+    private BigDecimal hourlyRate = null;
+    @JsonIgnore
+    private String encryptedHourlyRate;
 
     @OneToMany(mappedBy = "job", cascade = CascadeType.ALL)
     private List<Shift> shifts;

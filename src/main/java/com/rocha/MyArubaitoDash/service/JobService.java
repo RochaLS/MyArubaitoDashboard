@@ -4,6 +4,7 @@ import com.rocha.MyArubaitoDash.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Optional;
 
@@ -28,6 +29,9 @@ public class JobService {
         Optional<Job> job = jobRepository.findById(id);
 
         if (job.isPresent()) {
+            Job jobFound = job.get();
+            jobFound.setHourlyRate(new BigDecimal(encryptionService.decrypt(jobFound.getEncryptedHourlyRate())));
+            jobFound.setTitle(encryptionService.decrypt(jobFound.getEncryptedTitle()));
             return job.get();
         } else  {
             return null;
@@ -36,6 +40,10 @@ public class JobService {
 
     public void addJob(Job job) {
         try {
+            job.setEncryptedHourlyRate(encryptionService.encrypt(job.getHourlyRate().toString()));
+            job.setHourlyRate(null);
+            job.setEncryptedTitle(encryptionService.encrypt(job.getTitle()));
+            job.setTitle(null);
             jobRepository.save(job);
         } catch (Exception e) {
             System.out.println("Unexpected Error");
