@@ -3,6 +3,7 @@ package com.rocha.MyArubaitoDash.controller;
 import com.rocha.MyArubaitoDash.dto.ShiftDTO;
 import com.rocha.MyArubaitoDash.model.Shift;
 import com.rocha.MyArubaitoDash.service.ShiftService;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,6 +41,9 @@ public class ShiftController {
             shiftService.createShift(shiftDTO);
             return new ResponseEntity<>("Shift added!", HttpStatus.CREATED);
         } catch (Exception e) {
+            if (e instanceof EntityNotFoundException) {
+                return new ResponseEntity<>("Error adding shift. " + e.getMessage(), HttpStatus.BAD_REQUEST);
+            }
             return new ResponseEntity<>("Error adding shift. " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

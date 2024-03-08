@@ -105,20 +105,22 @@ public class ShiftService {
         }
     }
 
-    public void createShift(ShiftDTO shiftDTO) {
-
+    public void createShift(ShiftDTO shiftDTO) throws EntityNotFoundException{
        try {
            Worker worker = workerRepository.findById(shiftDTO.getWorkerId()).orElse(null);
            Job job = jobRepository.findById(shiftDTO.getJobId()).orElse(null);
 
-           if (worker == null && job == null) {
+           if (worker == null || job == null) {
                throw new EntityNotFoundException("Worker or job not found."); // NOT WORKING CHECK LATER
            }
            Shift shiftToAdd =  convertDTOToEntity(shiftDTO);
            shiftToAdd.setWorker(worker);
            shiftToAdd.setJob(job);
            shiftRepository.save(shiftToAdd);
-       }  catch (Exception e) {
+       } catch (EntityNotFoundException e) {
+           throw  e;
+       }
+       catch (Exception e) {
            System.out.println(e.getMessage());
        }
     }
