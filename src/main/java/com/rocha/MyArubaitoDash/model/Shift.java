@@ -1,5 +1,6 @@
 package com.rocha.MyArubaitoDash.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -26,6 +27,7 @@ public class Shift {
     //Specifying the sql join to get shifts based on worker and job.
     @ManyToOne
     @JoinColumn(name = "worker_id")
+    @JsonIgnore
     private Worker worker;
 
     @ManyToOne

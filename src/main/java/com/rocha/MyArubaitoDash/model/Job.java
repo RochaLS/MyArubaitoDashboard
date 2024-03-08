@@ -27,6 +27,7 @@ public class Job {
     private String encryptedHourlyRate;
 
     @OneToMany(mappedBy = "job", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Shift> shifts;
 
     @ManyToOne

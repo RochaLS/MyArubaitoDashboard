@@ -22,7 +22,13 @@ public class JobService {
     }
 
     public ArrayList<Job> getJobsByWorkerId(int workerId) {
-        return jobRepository.findAllByWorkerId(workerId);
+        ArrayList<Job> jobs = jobRepository.findAllByWorkerId(workerId);
+        for (Job job : jobs) {
+            job.setHourlyRate(new BigDecimal(encryptionService.decrypt(job.getEncryptedHourlyRate())));
+            job.setTitle(encryptionService.decrypt(job.getEncryptedTitle()));
+        }
+
+        return jobs;
     }
 
     public Job getJobById(int id) {
