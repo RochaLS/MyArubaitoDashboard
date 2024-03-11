@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/shift")
 public class ShiftController {
@@ -17,6 +19,17 @@ public class ShiftController {
 
     @Autowired public ShiftController(ShiftService shiftService) {
         this.shiftService = shiftService;
+    }
+
+    @GetMapping("byWorker/{id}")
+    public ResponseEntity<?> getShiftByWorkerId(@PathVariable int id) {
+        List<Shift> shifts = shiftService.getShiftsByWorkerId(id);
+
+        if (shifts.isEmpty()) {
+            return new ResponseEntity<>("Shift not found", HttpStatus.NOT_FOUND);
+        }
+
+        return ResponseEntity.ok(shifts);
     }
 
     @GetMapping("/{id}")
