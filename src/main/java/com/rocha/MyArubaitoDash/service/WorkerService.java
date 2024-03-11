@@ -11,16 +11,20 @@ import java.util.Optional;
 public class WorkerService {
 
     private final WorkerRepository workerRepository;
+    private final EncryptionService encryptionService;
 
     @Autowired
-    public WorkerService(WorkerRepository workerRepository) {
+    public WorkerService(WorkerRepository workerRepository, EncryptionService encryptionService) {
         this.workerRepository = workerRepository;
+        this.encryptionService = encryptionService;
     }
 
     public Worker getWorkerById(int id) {
         Optional<Worker> worker = workerRepository.findById(id);
         if (worker.isPresent()) {
-            return worker.get();
+            Worker workerFound = worker.get();
+            workerFound.setLocation(encryptionService.decrypt(workerFound.getEncryptedLocation()));
+            return workerFound;
         }
 
         return null;
@@ -28,6 +32,8 @@ public class WorkerService {
 
     public void addWorker(Worker worker) {
         try {
+            worker.setEncryptedLocation(encryptionService.encrypt(worker.getLocation()));
+            worker.setLocation(null);
             workerRepository.save(worker);
             System.out.println("Worker with id: " + worker.getId() + " successfully added.");
         } catch (Exception e) {

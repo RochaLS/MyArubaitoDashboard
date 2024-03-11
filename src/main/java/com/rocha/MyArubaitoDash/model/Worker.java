@@ -13,11 +13,16 @@ import java.util.List;
 @Entity
 public class Worker {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     private String name;
+    @Transient
     private String location;
+    @JsonIgnore
+    private String encryptedLocation;
 
 
+    @JsonIgnore
     @OneToMany(mappedBy =  "worker", cascade = CascadeType.ALL)
     private List<Shift> shifts;
 

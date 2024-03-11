@@ -38,7 +38,7 @@ public class JobService {
             Job jobFound = job.get();
             jobFound.setHourlyRate(new BigDecimal(encryptionService.decrypt(jobFound.getEncryptedHourlyRate())));
             jobFound.setTitle(encryptionService.decrypt(jobFound.getEncryptedTitle()));
-            return job.get();
+            return jobFound;
         } else  {
             return null;
         }

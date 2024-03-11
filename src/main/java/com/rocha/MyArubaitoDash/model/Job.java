@@ -16,6 +16,7 @@ import java.util.List;
 @Entity
 public class Job {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     @Transient // Not mapped to db
     private String title = null;
