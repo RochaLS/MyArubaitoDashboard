@@ -55,7 +55,7 @@ public class WorkerService {
                 }
 
                 if (updatedWorker.getLocation() != null) {
-                    worker.setLocation(updatedWorker.getLocation());
+                    worker.setEncryptedLocation(encryptionService.encrypt(updatedWorker.getLocation()));
                 }
 
 //                if (updatedWorker.getHourlyRate() != null) {
