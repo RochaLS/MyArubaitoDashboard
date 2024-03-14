@@ -64,12 +64,14 @@ public class JobService {
             if (optionalJob.isPresent()) {
                 Job jobToBeUpdated = optionalJob.get();
 
+                //Encrypt and then update.
+
                 if (updatedJob.getTitle() != null) {
-                    jobToBeUpdated.setTitle(updatedJob.getTitle());
+                    jobToBeUpdated.setEncryptedTitle(encryptionService.encrypt(updatedJob.getTitle()));
                 }
 
                 if (updatedJob.getHourlyRate() != null) {
-                    jobToBeUpdated.setHourlyRate(updatedJob.getHourlyRate());
+                    jobToBeUpdated.setEncryptedHourlyRate(encryptionService.encrypt(updatedJob.getHourlyRate().toString()));
                 }
 
                 jobRepository.save(jobToBeUpdated);
