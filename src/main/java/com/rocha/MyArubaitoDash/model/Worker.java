@@ -21,7 +21,6 @@ public class Worker {
     @JsonIgnore
     private String encryptedLocation;
 
-
     @JsonIgnore
     @OneToMany(mappedBy =  "worker", cascade = CascadeType.ALL)
     private List<Shift> shifts;
@@ -29,6 +28,10 @@ public class Worker {
     @OneToMany(mappedBy = "worker", cascade = CascadeType.ALL)
     @JsonIgnore
     private List<Job> jobs;
+
+    private String password;
+    private String authority;
+
 
 }
 
