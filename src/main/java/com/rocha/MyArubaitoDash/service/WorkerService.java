@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -17,10 +18,13 @@ public class WorkerService {
     private final WorkerRepository workerRepository;
     private final EncryptionService encryptionService;
 
+    private final PasswordEncoder passwordEncoder;
+
     @Autowired
-    public WorkerService(WorkerRepository workerRepository, EncryptionService encryptionService) {
+    public WorkerService(WorkerRepository workerRepository, EncryptionService encryptionService, PasswordEncoder passwordEncoder) {
         this.workerRepository = workerRepository;
         this.encryptionService = encryptionService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public Worker getWorkerById(int id) {
@@ -38,6 +42,9 @@ public class WorkerService {
         try {
             worker.setEncryptedLocation(encryptionService.encrypt(worker.getLocation()));
             worker.setLocation(null);
+            String hashedPassword = passwordEncoder.encode(worker.getPassword());
+            System.out.println("Hashed pass: " + hashedPassword);
+            worker.setPassword(hashedPassword);
             workerRepository.save(worker);
             System.out.println("Worker with id: " + worker.getId() + " successfully added.");
         } catch (Exception e) {
