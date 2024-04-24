@@ -11,7 +11,9 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -143,6 +145,10 @@ public class ShiftService {
         shift.setShiftType(shiftDTO.getShiftType());
 
         return shift;
+    }
+
+    public List<Shift> getShiftsFrom(LocalDate date, int workerId, int jobId) {
+        return shiftRepository.findShiftsFromSpecificDate(jobId, workerId, date);
     }
 
 }
