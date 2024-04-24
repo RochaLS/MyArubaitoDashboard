@@ -15,8 +15,8 @@ public class CustomUserDetailsService implements UserDetailsService {
         this.workerRepository = workerRepository;
     }
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Worker worker = workerRepository.findWorkerByName(username);
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        Worker worker = workerRepository.findWorkerByEmail(email);
 
         if (worker == null) {
             throw new UsernameNotFoundException("User not found");

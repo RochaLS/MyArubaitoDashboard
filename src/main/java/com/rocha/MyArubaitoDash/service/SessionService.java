@@ -19,15 +19,6 @@ public class SessionService {
         return sessionRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Session not found."));
     }
 
-    public Session getByUsername(String username) {
-        Session session = sessionRepository.findByUsername(username);
-
-        if (session == null) {
-            throw new EntityNotFoundException("Session not found.");
-        }
-
-        return session;
-    }
 
     public void create(Session session) {
         sessionRepository.save(session);

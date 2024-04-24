@@ -9,7 +9,7 @@ import java.util.List;
 
 public class SecurityUser implements UserDetails {
 
-    private final Worker worker;
+    public final Worker worker;
 
     public SecurityUser(Worker worker) {
         this.worker = worker;
@@ -29,6 +29,7 @@ public class SecurityUser implements UserDetails {
         return worker.getName();
     }
 
+
     @Override
     public boolean isAccountNonExpired() {
         return true;
@@ -47,5 +48,9 @@ public class SecurityUser implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    public String getEmail() {
+        return worker.getEmail();
     }
 }

@@ -15,8 +15,6 @@ import java.time.LocalDateTime;
 public class Session {
     @Id
     private String id;
-    private String username;
-    private String userId;
+    private int userId;
     private LocalDateTime timestamp;
-
 }
