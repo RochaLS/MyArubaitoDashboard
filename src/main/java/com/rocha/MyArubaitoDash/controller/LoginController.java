@@ -27,15 +27,11 @@ public class LoginController {
 
     @GetMapping("/login")
     public String login(Authentication a, HttpSession httpSession) {
-        Session session = new Session();
-        session.setId(httpSession.getId());
+
 
         SecurityUser securityUser = (SecurityUser) a.getPrincipal();
-        session.setTimestamp(LocalDateTime.now());
-        session.setUserId(securityUser.worker.getId());
+        httpSession.setAttribute("userId", String.valueOf(securityUser.worker.getId()));
 
-
-        sessionService.create(session);
 
         return "Session for " + securityUser.worker.getEmail() + " with session id: " + httpSession.getId() + " created.";
     }

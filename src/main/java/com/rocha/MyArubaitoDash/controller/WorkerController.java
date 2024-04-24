@@ -18,9 +18,9 @@ public class WorkerController {
         this.workerService = workerService;
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Worker> getWorkerById(@PathVariable int id) {
-        Worker worker = workerService.getWorkerById(id);
+    @GetMapping()
+    public ResponseEntity<Worker> getWorkerById(@RequestParam int userId) {
+        Worker worker = workerService.getWorkerById(userId);
 
         return ResponseEntity.ok(worker);
     }
