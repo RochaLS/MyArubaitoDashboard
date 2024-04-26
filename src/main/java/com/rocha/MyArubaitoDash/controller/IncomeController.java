@@ -3,11 +3,7 @@ package com.rocha.MyArubaitoDash.controller;
 
 import com.rocha.MyArubaitoDash.dto.IncomeDTO;
 import com.rocha.MyArubaitoDash.service.IncomeService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.math.BigDecimal;
+import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 @RestController
@@ -20,9 +16,9 @@ public class IncomeController {
         this.incomeService = incomeService;
     }
 
-    @GetMapping("/calculate")
-    public IncomeDTO getGrossPay() {
-        return incomeService.geIncomeDataFor(LocalDate.of(2024, 2, 28), 4, 1);
+    @GetMapping("/{workerId}/{jobId}/calculate")
+    public IncomeDTO getIncomeData(@RequestParam("date") LocalDate date, @PathVariable int workerId, @PathVariable int jobId) {
+        return incomeService.geIncomeDataFor(date, workerId, jobId);
     }
 
 

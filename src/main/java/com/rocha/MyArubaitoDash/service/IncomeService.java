@@ -4,17 +4,12 @@ import com.rocha.MyArubaitoDash.dto.IncomeDTO;
 import com.rocha.MyArubaitoDash.dto.ShiftDTO;
 import com.rocha.MyArubaitoDash.model.Job;
 import com.rocha.MyArubaitoDash.model.Shift;
-import com.rocha.MyArubaitoDash.repository.JobRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -34,7 +29,7 @@ public class IncomeService {
        if (shifts.size() == 0) {
            throw new EntityNotFoundException("No shifts found");
        }
-       Job job = jobService.getJobById(1);
+       Job job = jobService.getJobById(jobId);
        BigDecimal jobHourlyRate = job.getHourlyRate();
 
        float totalHours = 0;
@@ -42,13 +37,8 @@ public class IncomeService {
 
        List<ShiftDTO> shiftDTOS = new ArrayList<>();
 
-
        // Here we are considering that in shifts longer than 5 hours there's a 30min break.
         for (Shift shift : shifts) {
-            float shiftDuration = ChronoUnit.HOURS.between(shift.getStartTime(), shift.getEndTime());
-            if (shiftDuration >= 5) {
-                shiftDuration -= 0.5; // - 30min break
-            }
 
             shiftDTOS.add(new ShiftDTO(
                     workerId,
@@ -60,18 +50,23 @@ public class IncomeService {
                     shift.getShiftType())
             );
 
-            totalHours += shiftDuration;
-
+            totalHours += calculateShiftDuration(shift);
             System.out.println("Start date: " + shift.getStartDate() + " start time: " + shift.getStartTime());
 
         }
 
         grossPay = new BigDecimal(totalHours).multiply(jobHourlyRate);
-
-
-
         System.out.println("Total hours: " + totalHours + " times " + jobHourlyRate + " = " + grossPay);
 
         return new IncomeDTO(grossPay, shiftDTOS, shiftDTOS.get(0));
+    }
+
+    private float calculateShiftDuration(Shift shift) {
+        float shiftDuration = ChronoUnit.HOURS.between(shift.getStartTime(), shift.getEndTime());
+        if (shiftDuration >= 5) {
+            shiftDuration -= 0.5; // - 30min break
+        }
+
+        return shiftDuration;
     }
 }
