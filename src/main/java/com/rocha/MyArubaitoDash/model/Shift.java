@@ -25,6 +25,8 @@ public class Shift {
     private LocalTime endTime;
     private String shiftType;
 
+    // If I were to implement eager loading in the future:
+
     //Specifying the sql join to get shifts based on worker and job.
     @ManyToOne
     @JoinColumn(name = "worker_id")

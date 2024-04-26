@@ -22,17 +22,17 @@ public class Worker {
     @JsonIgnore
     private String encryptedLocation;
 
+    private String password;
+    private String authority;
+
+// If I were to implement eager loading in the future:
     @JsonIgnore
     @OneToMany(mappedBy =  "worker", cascade = CascadeType.ALL)
     private List<Shift> shifts;
 
     @OneToMany(mappedBy = "worker", cascade = CascadeType.ALL)
-    @JsonIgnore
+//    @JsonIgnore
     private List<Job> jobs;
-
-    private String password;
-    private String authority;
-
 
 }
 

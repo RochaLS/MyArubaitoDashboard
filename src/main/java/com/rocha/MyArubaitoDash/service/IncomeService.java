@@ -27,7 +27,7 @@ public class IncomeService {
        List<Shift> shifts = shiftService.getShiftsFrom(fromDate,workerId, jobId);
 
        if (shifts.size() == 0) {
-           throw new EntityNotFoundException("No shifts found");
+           return null;
        }
        Job job = jobService.getJobById(jobId);
        BigDecimal jobHourlyRate = job.getHourlyRate();
