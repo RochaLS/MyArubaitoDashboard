@@ -2,7 +2,6 @@ package com.rocha.MyArubaitoDash.controller;
 
 
 import com.rocha.MyArubaitoDash.security.SecurityUser;
-import com.rocha.MyArubaitoDash.service.IncomeService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;

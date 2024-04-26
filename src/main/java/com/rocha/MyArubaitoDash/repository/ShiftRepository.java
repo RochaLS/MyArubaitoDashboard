@@ -6,7 +6,6 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.List;
 
 public interface ShiftRepository extends JpaRepository<Shift, Integer> {
     ArrayList<Shift> findAllByWorkerId(int workerId);
