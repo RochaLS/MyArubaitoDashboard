@@ -14,6 +14,6 @@ public interface ShiftRepository extends JpaRepository<Shift, Integer> {
 
     // Basically
 
-    @Query(value = "SELECT * FROM shift WHERE job_id = ?1 AND worker_id = ?2 AND (start_date >= ?3)", nativeQuery = true)
+    @Query(value = "SELECT * FROM shift WHERE job_id = ?1 AND worker_id = ?2 AND (start_date >= ?3) ORDER BY start_date", nativeQuery = true)
     ArrayList<Shift> findShiftsFromSpecificDate(int jobId, int workerId, LocalDate startDate);
 }
