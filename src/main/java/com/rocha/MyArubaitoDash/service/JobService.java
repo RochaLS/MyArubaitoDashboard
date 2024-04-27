@@ -1,7 +1,11 @@
 package com.rocha.MyArubaitoDash.service;
+import com.rocha.MyArubaitoDash.dto.JobDTO;
 import com.rocha.MyArubaitoDash.model.Job;
+import com.rocha.MyArubaitoDash.model.Worker;
 import com.rocha.MyArubaitoDash.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -13,12 +17,14 @@ public class JobService {
 
     private final JobRepository jobRepository;
     private final EncryptionService encryptionService;
+    private final WorkerService workerService;
 
     @Autowired
-    public JobService(JobRepository jobRepository, EncryptionService encService) {
+    public JobService(JobRepository jobRepository, EncryptionService encService, WorkerService workerService) {
 
         this.jobRepository = jobRepository;
         this.encryptionService = encService;
+        this.workerService = workerService;
     }
 
     public ArrayList<Job> getJobsByWorkerId(int workerId) {
@@ -57,24 +63,22 @@ public class JobService {
         }
     }
 
-    public void updateJob(int id, Job updatedJob) {
+    public void updateJob(int id, JobDTO updatedJob) {
         try {
             Optional<Job> optionalJob = jobRepository.findById(id);
 
             if (optionalJob.isPresent()) {
                 Job jobToBeUpdated = optionalJob.get();
 
-                //Encrypt and then update.
+                Worker worker = workerService.getWorkerById(updatedJob.getWorkerId());
 
-                if (updatedJob.getTitle() != null) {
-                    jobToBeUpdated.setEncryptedTitle(encryptionService.encrypt(updatedJob.getTitle()));
-                }
+                jobToBeUpdated.setTitle(updatedJob.getTitle());
+                jobToBeUpdated.setHourlyRate(updatedJob.getHourlyRate());
+                jobToBeUpdated.setWorker(worker);
+                jobToBeUpdated.setEncryptedHourlyRate(encryptionService.encrypt(updatedJob.getHourlyRate().toString()));
+                jobToBeUpdated.setEncryptedTitle(encryptionService.encrypt(updatedJob.getTitle()));
 
-                if (updatedJob.getHourlyRate() != null) {
-                    jobToBeUpdated.setEncryptedHourlyRate(encryptionService.encrypt(updatedJob.getHourlyRate().toString()));
-                }
-
-                jobRepository.save(jobToBeUpdated);
+             jobRepository.save(jobToBeUpdated);
             }
         } catch (Exception e) {
             System.out.println("Unexpected Error");

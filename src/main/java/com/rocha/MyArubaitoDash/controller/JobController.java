@@ -5,6 +5,7 @@ import com.rocha.MyArubaitoDash.model.Job;
 import com.rocha.MyArubaitoDash.model.Worker;
 import com.rocha.MyArubaitoDash.service.JobService;
 import com.rocha.MyArubaitoDash.service.WorkerService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -43,7 +44,7 @@ public class JobController {
     object. When sending the full object springboot was having issues in parsing it.
      */
     @PostMapping("/add")
-    public ResponseEntity<String> addJob(@RequestBody JobDTO jobDTO) {
+    public ResponseEntity<String> addJob(@Valid @RequestBody JobDTO jobDTO) {
         try {
             Worker worker = workerService.getWorkerById(jobDTO.getWorkerId());
 
@@ -65,9 +66,9 @@ public class JobController {
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<String> updateJob(@PathVariable int id, @RequestBody Job job) {
+    public ResponseEntity<String> updateJob(@PathVariable int id, @Valid @RequestBody JobDTO jobDTO) {
         try {
-            jobService.updateJob(id, job);
+            jobService.updateJob(id, jobDTO);
             return new ResponseEntity<>("Job updated successfully", HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>("Error updating job: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);

@@ -2,6 +2,8 @@ package com.rocha.MyArubaitoDash.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,12 +19,16 @@ public class Job {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+
     @Transient // Not mapped to db
-    private String title = null;
+    private String title;
+
     @JsonIgnore
     private String encryptedTitle;
+
     @Transient // Not mapped to db
-    private BigDecimal hourlyRate = null;
+    private BigDecimal hourlyRate;
+
     @JsonIgnore
     private String encryptedHourlyRate;
 
