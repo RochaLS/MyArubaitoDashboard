@@ -4,6 +4,7 @@ import com.rocha.MyArubaitoDash.dto.ShiftDTO;
 import com.rocha.MyArubaitoDash.model.Shift;
 import com.rocha.MyArubaitoDash.service.ShiftService;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,7 +45,7 @@ public class ShiftController {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<String> addShift(@RequestBody ShiftDTO shiftDTO) {
+    public ResponseEntity<String> addShift(@RequestBody @Valid ShiftDTO shiftDTO) {
         try {
             if (shiftDTO == null) {
                 return new ResponseEntity<>("Invalid shift data", HttpStatus.BAD_REQUEST);
@@ -62,7 +63,7 @@ public class ShiftController {
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<String> updatedShift(@PathVariable int id, @RequestBody ShiftDTO shiftDTO) {
+    public ResponseEntity<String> updatedShift(@PathVariable int id, @RequestBody @Valid ShiftDTO shiftDTO) {
         try {
             shiftService.updateShift(id, shiftDTO);
             return new ResponseEntity<>("Shift Updated!", HttpStatus.OK);

@@ -2,6 +2,8 @@ package com.rocha.MyArubaitoDash.dto;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -23,10 +25,21 @@ public class ShiftDTO {
     private int workerId;
 
     @JsonProperty("job_id")
-    private int jobId;
+    @NotNull
+    private Integer jobId;
+
+    @NotNull
     private LocalDate startDate;
+
+    @NotNull
     private LocalTime startTime;
+
+    @NotNull
     private LocalDate endDate;
+
+    @NotNull
     private LocalTime endTime;
+
+    @NotNull
     private String shiftType;
 }

@@ -65,30 +65,8 @@ public class ShiftService {
             updatedShift.setJob(job);
 
             if (optionalShift.isPresent()) {
-                Shift shiftToBeUpdated = optionalShift.get();
-
-                /*
-                 * User is only allowed to update shift time, type and job.
-                 * Updating the rest is redundant as the user can simply delete the shift and create a new one.
-                 */
-
-                if (updatedShift.getStartTime() != null) {
-                    shiftToBeUpdated.setStartTime(updatedShift.getStartTime());
-                }
-
-                if (updatedShift.getEndTime() != null) {
-                    shiftToBeUpdated.setEndTime(updatedShift.getEndTime());
-                }
-
-                if (updatedShift.getShiftType() != null) {
-                    shiftToBeUpdated.setShiftType(updatedShift.getShiftType());
-                }
-
-                if (updatedShift.getJob() != null) {
-                    shiftToBeUpdated.setJob(updatedShift.getJob());
-                }
-
-                shiftRepository.save(shiftToBeUpdated);
+                updatedShift.setId(optionalShift.get().getId());
+                shiftRepository.save(updatedShift);
             }
         } catch (Exception e) {
             System.out.println("Unexpected Error");
