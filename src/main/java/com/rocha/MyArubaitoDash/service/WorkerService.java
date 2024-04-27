@@ -37,7 +37,6 @@ public class WorkerService {
     public void addWorker(Worker worker) {
         try {
             worker.setEncryptedLocation(encryptionService.encrypt(worker.getLocation()));
-            worker.setLocation(null);
             String hashedPassword = passwordEncoder.encode(worker.getPassword());
             System.out.println("Hashed pass: " + hashedPassword);
             worker.setPassword(hashedPassword);
@@ -54,23 +53,12 @@ public class WorkerService {
             Optional<Worker> workerToBeUpdated = workerRepository.findById(id);
             if (workerToBeUpdated.isPresent()) {
                 Worker worker = workerToBeUpdated.get();
-
-                // The below conditionals check which fields are necessary to update...
-                // If we don't do this the fields that are not being updated might be overridden to null.
-                if (updatedWorker.getName() != null) {
-                    worker.setName(updatedWorker.getName());
-                }
-
-                if (updatedWorker.getLocation() != null) {
-                    worker.setEncryptedLocation(encryptionService.encrypt(updatedWorker.getLocation()));
-                }
-
-//                if (updatedWorker.getHourlyRate() != null) {
-//                    worker.setHourlyRate(updatedWorker.getHourlyRate());
-//                }
+                updatedWorker.setEncryptedLocation(encryptionService.encrypt(updatedWorker.getLocation()));
+                updatedWorker.setId(worker.getId());
+                updatedWorker.setPassword(worker.getPassword()); // Temporary solution
 
 
-                workerRepository.save(worker);
+                workerRepository.save(updatedWorker);
                 System.out.println("Worker with id: " + id + " successfully updated.");
 
             }

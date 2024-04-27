@@ -2,6 +2,7 @@ package com.rocha.MyArubaitoDash.controller;
 
 import com.rocha.MyArubaitoDash.model.Worker;
 import com.rocha.MyArubaitoDash.service.WorkerService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,7 +37,13 @@ public class WorkerController {
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<String> updateWorker(@PathVariable int id, @RequestBody Worker worker) {
+    public ResponseEntity<String> updateWorker(@PathVariable int id, @Valid @RequestBody Worker worker) {
+
+        // I need to validate it here, as I'm marking location as @Transient. So I can't use validation annotations.
+        // Maybe a DTO can fix that in the future
+        if (worker.getLocation() == null || worker.getLocation().isBlank()) {
+            return new ResponseEntity<>("Error updating worker: Location can't be null or blank.", HttpStatus.BAD_REQUEST);
+        }
         try {
             workerService.updateWorker(id, worker);
             return new ResponseEntity<>("Worker updated successfully", HttpStatus.OK);
