@@ -47,6 +47,7 @@ public class IncomeService {
                     shift.getEndDate(),
                     shift.getEndTime(),
                     shift.getShiftType())
+
             );
 
             totalHours += calculateShiftDuration(shift);
@@ -57,7 +58,9 @@ public class IncomeService {
         grossPay = new BigDecimal(totalHours).multiply(jobHourlyRate);
         System.out.println("Total hours: " + totalHours + " times " + jobHourlyRate + " = " + grossPay);
 
-        return new IncomeDTO(grossPay, shiftDTOS, shiftDTOS.get(0));
+        float nextShiftDuration = calculateShiftDuration(shifts.get(0));
+
+        return new IncomeDTO(grossPay, shiftDTOS, shiftDTOS.get(0), nextShiftDuration, new BigDecimal(nextShiftDuration).multiply(jobHourlyRate) , totalHours);
     }
 
     private float calculateShiftDuration(Shift shift) {

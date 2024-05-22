@@ -14,4 +14,7 @@ public class IncomeDTO {
     private BigDecimal totalGrossPay;
     private List<ShiftDTO> shifts;
     private ShiftDTO nextShift;
+    private float nextShiftTotalHours;
+    private BigDecimal nextShiftGrossPay;
+    private float totalHours;
 }
