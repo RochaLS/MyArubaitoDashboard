@@ -34,6 +34,7 @@ public class WorkerService {
         return null;
     }
 
+
     public void addWorker(Worker worker) {
         try {
             worker.setEncryptedLocation(encryptionService.encrypt(worker.getLocation()));
