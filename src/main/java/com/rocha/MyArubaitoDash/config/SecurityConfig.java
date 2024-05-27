@@ -3,6 +3,7 @@ package com.rocha.MyArubaitoDash.config;
 
 import com.rocha.MyArubaitoDash.repository.WorkerRepository;
 import com.rocha.MyArubaitoDash.service.CustomUserDetailsService;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -24,12 +25,15 @@ public class SecurityConfig {
                 .authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers("/api/worker/add").permitAll()
                         .requestMatchers("/login").permitAll()
-                        .anyRequest().permitAll()
+                        .anyRequest().authenticated()
                 )
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
                 .csrf().disable()
-                .httpBasic(Customizer.withDefaults());
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .httpBasic(Customizer.withDefaults())
+                .exceptionHandling(customizer -> customizer
+                        .authenticationEntryPoint((request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+                );
 
         return http.build();
     }
