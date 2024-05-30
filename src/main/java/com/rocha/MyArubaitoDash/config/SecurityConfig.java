@@ -25,6 +25,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers("/api/worker/add").permitAll()
                         .requestMatchers("/login").permitAll()
+                        .requestMatchers("/api/validate-session").permitAll()
                         .anyRequest().authenticated()
                 )
                 .csrf().disable()
