@@ -45,4 +45,6 @@ public class ShiftDTO {
     @NotNull
     private String shiftType;
 
+    private int id;
+
 }

@@ -46,7 +46,9 @@ public class IncomeService {
                     shift.getStartTime(),
                     shift.getEndDate(),
                     shift.getEndTime(),
-                    shift.getShiftType())
+                    shift.getShiftType(),
+                    shift.getId()
+                    )
 
             );
 
