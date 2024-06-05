@@ -29,5 +29,17 @@ public class IncomeController {
         return ResponseEntity.ok(incomeData);
     }
 
+    @GetMapping("/{workerId}/calculate")
+    public ResponseEntity<?> getAllIncomeData(@RequestParam("date") LocalDate date, @PathVariable int workerId) {
+        IncomeDTO incomeData = incomeService.geIncomeDataFor(date, workerId, -1);
+        if (incomeData == null) {
+            return new ResponseEntity<>("Data not found.", HttpStatus.NOT_FOUND);
+        }
+
+        return ResponseEntity.ok(incomeData);
+    }
+
+
+
 
 }

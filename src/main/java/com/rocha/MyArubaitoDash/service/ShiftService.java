@@ -129,4 +129,8 @@ public class ShiftService {
         return shiftRepository.findShiftsFromSpecificDate(jobId, workerId, date);
     }
 
+    public List<Shift> getAllShiftsByWorkerFrom(LocalDate date, int workerId) {
+        return shiftRepository.findAllShiftsByWorkerFromSpecificDate(workerId, date);
+    }
+
 }

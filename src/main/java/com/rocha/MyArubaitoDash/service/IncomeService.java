@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @Service
@@ -22,48 +23,61 @@ public class IncomeService {
         this.jobService = jobService;
     }
 
+
     public IncomeDTO geIncomeDataFor(LocalDate fromDate, int workerId, int jobId) {
-       List<Shift> shifts = shiftService.getShiftsFrom(fromDate,workerId, jobId);
+        List<Shift> shifts;
+        if (jobId == -1) {
+            shifts = shiftService.getAllShiftsByWorkerFrom(fromDate, workerId);
+        } else {
+            shifts = shiftService.getShiftsFrom(fromDate, workerId, jobId);
+        }
 
-       if (shifts.size() == 0) {
-           return null;
-       }
-       Job job = jobService.getJobById(jobId);
-       BigDecimal jobHourlyRate = job.getHourlyRate();
+        if (shifts.isEmpty()) {
+            return null;
+        }
 
-       float totalHours = 0;
-       BigDecimal grossPay;
+        // Create a HashMap to store job hourly rates together with jobId to use later
+        HashMap<Integer, BigDecimal> jobHourlyRateMap = new HashMap<>();
 
-       List<ShiftDTO> shiftDTOS = new ArrayList<>();
+        float totalHours = 0;
+        List<ShiftDTO> shiftDTOS = new ArrayList<>();
 
-       // Here we are considering that in shifts longer than 5 hours there's a 30min break.
         for (Shift shift : shifts) {
+            int currentShiftJobId = shift.getJob().getId();
+
+            // Retrieve job hourly rate and store it in the HashMap if not there already
+            BigDecimal jobHourlyRate = jobHourlyRateMap.computeIfAbsent(currentShiftJobId, id -> jobService.getJobById(id).getHourlyRate());
 
             shiftDTOS.add(new ShiftDTO(
                     workerId,
-                    jobId,
+                    currentShiftJobId,
                     shift.getStartDate(),
                     shift.getStartTime(),
                     shift.getEndDate(),
                     shift.getEndTime(),
                     shift.getShiftType(),
                     shift.getId()
-                    )
-
-            );
+            ));
 
             totalHours += calculateShiftDuration(shift);
-            System.out.println("Start date: " + shift.getStartDate() + " start time: " + shift.getStartTime());
-
         }
 
-        grossPay = new BigDecimal(totalHours).multiply(jobHourlyRate);
-        System.out.println("Total hours: " + totalHours + " times " + jobHourlyRate + " = " + grossPay);
+        // Calculate gross pay
+        BigDecimal grossPay = BigDecimal.ZERO;
+        for (Shift shift : shifts) {
+            BigDecimal jobHourlyRate = jobHourlyRateMap.get(shift.getJob().getId());
+            System.out.println(jobHourlyRate);
+            grossPay = grossPay.add(new BigDecimal(calculateShiftDuration(shift)).multiply(jobHourlyRate));
+        }
+
+        System.out.println("Total hours: " + totalHours + " times hourly rates = " + grossPay);
 
         float nextShiftDuration = calculateShiftDuration(shifts.get(0));
 
-        return new IncomeDTO(grossPay, shiftDTOS, shiftDTOS.get(0), nextShiftDuration, new BigDecimal(nextShiftDuration).multiply(jobHourlyRate) , totalHours);
+        return new IncomeDTO(grossPay, shiftDTOS, shiftDTOS.get(0), nextShiftDuration, new BigDecimal(nextShiftDuration).multiply(jobHourlyRateMap.get(shiftDTOS.get(0).getJobId())), totalHours);
     }
+
+
 
     private float calculateShiftDuration(Shift shift) {
 //        float shiftDuration = ChronoUnit.HOURS.between(shift.getStartTime(), shift.getEndTime());
@@ -74,7 +88,6 @@ public class IncomeService {
 
         // Convert the duration from minutes to hours with fractions
         float shiftDuration = minutesDifference / 60.0f;
-        System.out.print("Before break: " + shiftDuration);
         if (shiftDuration >= 5) {
             shiftDuration -= 0.5; // - 30min break
         }
