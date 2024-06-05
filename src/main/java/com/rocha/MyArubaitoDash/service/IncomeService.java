@@ -66,10 +66,19 @@ public class IncomeService {
     }
 
     private float calculateShiftDuration(Shift shift) {
-        float shiftDuration = ChronoUnit.HOURS.between(shift.getStartTime(), shift.getEndTime());
+//        float shiftDuration = ChronoUnit.HOURS.between(shift.getStartTime(), shift.getEndTime());
+
+        // Need to calculate shift duration in minutes first and then convert to hours...
+        // The code above only calculates whole hours
+        long minutesDifference = ChronoUnit.MINUTES.between(shift.getStartTime(), shift.getEndTime());
+
+        // Convert the duration from minutes to hours with fractions
+        float shiftDuration = minutesDifference / 60.0f;
+        System.out.print("Before break: " + shiftDuration);
         if (shiftDuration >= 5) {
             shiftDuration -= 0.5; // - 30min break
         }
+
 
         return shiftDuration;
     }
