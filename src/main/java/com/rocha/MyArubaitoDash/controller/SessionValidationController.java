@@ -13,7 +13,6 @@ public class SessionValidationController {
     @GetMapping("/validate-session")
     public ResponseEntity<?> validateSession(HttpSession session, @RequestParam String userId) {
         String sessionUserId = (String) session.getAttribute("userId");
-        System.out.println("==========\nSESSION ID: " + sessionUserId);
         if (sessionUserId != null && sessionUserId.equals(userId)) {
 
             return ResponseEntity.ok(sessionUserId);
