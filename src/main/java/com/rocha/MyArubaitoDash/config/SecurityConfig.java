@@ -2,6 +2,7 @@ package com.rocha.MyArubaitoDash.config;
 
 
 import com.rocha.MyArubaitoDash.repository.WorkerRepository;
+import com.rocha.MyArubaitoDash.security.CustomAuthEntryPoint;
 import com.rocha.MyArubaitoDash.service.CustomUserDetailsService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
@@ -32,7 +33,7 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .httpBasic(Customizer.withDefaults())
                 .exceptionHandling(customizer -> customizer
-                        .authenticationEntryPoint((request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+                        .authenticationEntryPoint(new CustomAuthEntryPoint())
                 );
 
         return http.build();
