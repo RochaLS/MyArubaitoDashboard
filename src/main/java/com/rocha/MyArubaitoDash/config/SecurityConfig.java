@@ -24,6 +24,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers("/api/worker/add").permitAll()
+                        .requestMatchers("api/worker/check-account").permitAll()
                         .requestMatchers("/login").permitAll()
                         .requestMatchers("/api/validate-session").permitAll()
                         .anyRequest().authenticated()

@@ -69,5 +69,11 @@ public class WorkerController {
         }
     }
 
+    @PostMapping("/check-account")
+    public ResponseEntity<Boolean> checkIfUserHasAccount(@RequestBody String email) {
+        email = email.trim();
+        return ResponseEntity.ok(workerService.checkWorkerByEmail(email));
+    }
+
 
 }

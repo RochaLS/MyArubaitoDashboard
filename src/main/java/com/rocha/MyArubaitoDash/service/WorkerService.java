@@ -34,6 +34,12 @@ public class WorkerService {
         return null;
     }
 
+    public boolean checkWorkerByEmail(String email) {
+        Worker worker = workerRepository.findWorkerByEmail(email);
+
+        return worker != null;
+    }
+
 
     public void addWorker(Worker worker) {
         try {
