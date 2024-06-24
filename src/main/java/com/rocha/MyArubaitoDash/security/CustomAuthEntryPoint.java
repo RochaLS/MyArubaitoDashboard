@@ -11,7 +11,7 @@ import java.io.IOException;
 public class CustomAuthEntryPoint implements AuthenticationEntryPoint {
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
-        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN); // 403 so browser pop is not triggered
         response.getWriter().write("Wrong credentials.");
     }
 }
