@@ -58,15 +58,20 @@ public class ShiftService {
         System.out.println(shiftDTO);
         try {
             Optional<Shift> optionalShift = shiftRepository.findById(id);
-            Worker worker = workerRepository.findById(shiftDTO.getWorkerId()).orElse(null);
-            Job job = jobRepository.findById(shiftDTO.getJobId()).orElse(null);
-            Shift updatedShift = convertDTOToEntity(shiftDTO);
-            updatedShift.setWorker(worker);
-            updatedShift.setJob(job);
 
             if (optionalShift.isPresent()) {
-                updatedShift.setId(optionalShift.get().getId());
-                shiftRepository.save(updatedShift);
+                Shift shiftToBeUpdated = optionalShift.get();
+                shiftToBeUpdated.setStartTime(shiftDTO.getStartTime());
+                shiftToBeUpdated.setEndTime(shiftDTO.getEndTime());
+                shiftToBeUpdated.setStartDate(shiftDTO.getStartDate());
+                shiftToBeUpdated.setEndDate(shiftDTO.getEndDate());
+                shiftToBeUpdated.setShiftType(shiftDTO.getShiftType());
+
+                Job job = jobRepository.findById(shiftDTO.getJobId())
+                        .orElseThrow(() -> new IllegalArgumentException("Job not found with id: " + shiftDTO.getJobId()));
+
+                shiftToBeUpdated.setJob(job);
+                shiftRepository.save(shiftToBeUpdated);
             }
         } catch (Exception e) {
             System.out.println("Unexpected Error");
