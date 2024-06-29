@@ -40,6 +40,10 @@ public class WorkerService {
         return worker != null;
     }
 
+    public Worker getWorkerByEmail(String email) {
+        return workerRepository.findWorkerByEmail(email);
+    }
+
 
     public void addWorker(Worker worker) {
         try {

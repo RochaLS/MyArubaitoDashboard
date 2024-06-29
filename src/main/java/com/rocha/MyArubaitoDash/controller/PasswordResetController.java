@@ -7,6 +7,8 @@ import com.rocha.MyArubaitoDash.service.EmailService;
 import com.rocha.MyArubaitoDash.service.PasswordResetService;
 import com.rocha.MyArubaitoDash.service.WorkerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.charset.StandardCharsets;
@@ -39,8 +41,6 @@ public class PasswordResetController {
     public String requestPasswordReset(@RequestBody String email) {
 
         boolean hasAccount = workerService.checkWorkerByEmail(email);
-
-
         // Generate and store password reset token
         // Send email with password reset link containing token
         try {
@@ -58,13 +58,23 @@ public class PasswordResetController {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
-
-
     }
 
-    private String hashToken(String token) throws NoSuchAlgorithmException {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(hash);
+    @PostMapping("/reset")
+    public ResponseEntity<String> resetPassword(@RequestParam String token, @RequestBody String newPassword) {
+        try {
+            boolean isTokenValid = passwordResetService.validateToken(token);
+            if (isTokenValid) {
+                passwordResetService.resetPassword(token, newPassword);
+                return ResponseEntity.ok("Password reset successfully.");
+            } else {
+                return ResponseEntity.badRequest().body("Invalid or expired token.");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred.");
+        }
     }
+
+
+
 }

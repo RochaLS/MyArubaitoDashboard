@@ -26,6 +26,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/worker/add").permitAll()
                         .requestMatchers("api/worker/check-account").permitAll()
                         .requestMatchers("/password-reset/request").permitAll()
+                        .requestMatchers("/password-reset/reset").permitAll()
                         .requestMatchers("/login").permitAll()
                         .requestMatchers("/api/validate-session").permitAll()
                         .anyRequest().authenticated()
