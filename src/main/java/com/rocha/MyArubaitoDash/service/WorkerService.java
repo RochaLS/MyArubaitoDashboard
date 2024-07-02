@@ -47,7 +47,9 @@ public class WorkerService {
 
     public void addWorker(Worker worker) {
         try {
-            worker.setEncryptedLocation(encryptionService.encrypt(worker.getLocation()));
+            if (worker.getLocation() != null) {
+                worker.setEncryptedLocation(encryptionService.encrypt(worker.getLocation()));
+            }
             String hashedPassword = passwordEncoder.encode(worker.getPassword());
             System.out.println("Hashed pass: " + hashedPassword);
             worker.setPassword(hashedPassword);
