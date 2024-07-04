@@ -27,7 +27,10 @@ public class WorkerService {
         Optional<Worker> worker = workerRepository.findById(id);
         if (worker.isPresent()) {
             Worker workerFound = worker.get();
-            workerFound.setLocation(encryptionService.decrypt(workerFound.getEncryptedLocation()));
+            if (workerFound.getEncryptedLocation() != null) {
+                workerFound.setLocation(encryptionService.decrypt(workerFound.getEncryptedLocation()));
+            }
+
             return workerFound;
         }
 
@@ -49,6 +52,8 @@ public class WorkerService {
         try {
             if (worker.getLocation() != null) {
                 worker.setEncryptedLocation(encryptionService.encrypt(worker.getLocation()));
+            } else {
+                worker.setEncryptedLocation(null);
             }
             String hashedPassword = passwordEncoder.encode(worker.getPassword());
             System.out.println("Hashed pass: " + hashedPassword);

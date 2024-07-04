@@ -1,27 +1,22 @@
 package com.rocha.MyArubaitoDash.controller;
 
-import com.rocha.MyArubaitoDash.model.PasswordResetToken;
-import com.rocha.MyArubaitoDash.model.Worker;
-import com.rocha.MyArubaitoDash.repository.TokenRepository;
 import com.rocha.MyArubaitoDash.service.EmailService;
 import com.rocha.MyArubaitoDash.service.PasswordResetService;
 import com.rocha.MyArubaitoDash.service.WorkerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.time.LocalDateTime;
-import java.util.Base64;
-import java.util.UUID;
+
 
 @RestController
 @RequestMapping("/password-reset")
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 public class PasswordResetController {
+
+    @Value("${RESET_PASSWORD_URL}")
+    private String resetPasswordUrl;
 
     private final EmailService emailService;
     private final WorkerService workerService;
@@ -46,7 +41,7 @@ public class PasswordResetController {
         try {
             String token = passwordResetService.createPasswordResetToken(email);
             if (token != null) {
-                String resetLink = "http://localhost:3000/password-reset/" + token;
+                String resetLink = resetPasswordUrl + token;
                 emailService.sendSimpleMessage(email, "Password Reset Request",
                         "Click the link below to reset your password:\n" + resetLink);
 

@@ -6,12 +6,8 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 @RestController
 @RequestMapping("/api/worker")
 public class WorkerController {
@@ -65,6 +61,7 @@ public class WorkerController {
             return new ResponseEntity<>("Worker deleted successfully", HttpStatus.OK);
 
         } catch (Exception e) {
+            System.out.println(e.getMessage());
             return new ResponseEntity<>("Error deleting worker: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
