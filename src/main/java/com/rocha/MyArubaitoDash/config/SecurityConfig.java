@@ -16,8 +16,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.session.web.http.CookieHttpSessionIdResolver;
 import org.springframework.session.web.http.CookieSerializer;
 import org.springframework.session.web.http.DefaultCookieSerializer;
+import org.springframework.session.web.http.HttpSessionIdResolver;
 
 @Configuration
 public class SecurityConfig {
@@ -41,6 +43,7 @@ public class SecurityConfig {
                 .httpBasic(Customizer.withDefaults())
                 .exceptionHandling(customizer -> customizer
                         .authenticationEntryPoint(new CustomAuthEntryPoint())
+
                 );
 
         return http.build();
@@ -60,6 +63,15 @@ public class SecurityConfig {
     @Bean
     public CookieSameSiteSupplier cookieSameSiteSupplier() {
         return CookieSameSiteSupplier.ofNone().whenHasName("JSESSIONID");
+    }
+
+    @Bean
+    public HttpSessionIdResolver httpSessionIdResolver() {
+        CookieHttpSessionIdResolver resolver = new CookieHttpSessionIdResolver();
+        DefaultCookieSerializer cookieSerializer = new DefaultCookieSerializer();
+        cookieSerializer.setUseSecureCookie(true); // Set the Secure attribute
+        resolver.setCookieSerializer(cookieSerializer);
+        return resolver;
     }
 
 
