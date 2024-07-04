@@ -58,10 +58,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CookieSerializer cookieSerializer() {
-        DefaultCookieSerializer serializer = new DefaultCookieSerializer();
-        serializer.setSameSite("Lax");
-        return serializer;
+    public CookieSameSiteSupplier cookieSameSiteSupplier() {
+        return CookieSameSiteSupplier.ofLax().whenHasName("JSESSIONID");
     }
 
 
