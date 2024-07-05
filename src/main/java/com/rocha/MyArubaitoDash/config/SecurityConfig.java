@@ -70,7 +70,9 @@ public class SecurityConfig {
         CookieHttpSessionIdResolver resolver = new CookieHttpSessionIdResolver();
         DefaultCookieSerializer cookieSerializer = new DefaultCookieSerializer();
         cookieSerializer.setUseSecureCookie(true); // Set the Secure attribute
+        cookieSerializer.setDomainName(".myarubaito.com");
         resolver.setCookieSerializer(cookieSerializer);
+
         return resolver;
     }
 
