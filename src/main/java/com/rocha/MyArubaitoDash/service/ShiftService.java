@@ -9,6 +9,7 @@ import com.rocha.MyArubaitoDash.repository.ShiftRepository;
 import com.rocha.MyArubaitoDash.repository.WorkerRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -136,6 +137,10 @@ public class ShiftService {
 
     public List<Shift> getAllShiftsByWorkerFrom(LocalDate date, int workerId) {
         return shiftRepository.findAllShiftsByWorkerFromSpecificDate(workerId, date);
+    }
+
+    public List<Shift> getAllShiftsInRangeByWorker(int workerId, LocalDate startDate, LocalDate endDate) {
+        return shiftRepository.findShiftsInRange(workerId, startDate, endDate);
     }
 
 }

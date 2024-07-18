@@ -21,7 +21,7 @@ public class IncomeController {
 
     @GetMapping("/{workerId}/{jobId}/calculate")
     public ResponseEntity<?> getIncomeData(@RequestParam("date") LocalDate date, @PathVariable int workerId, @PathVariable int jobId) {
-        IncomeDTO incomeData = incomeService.geIncomeDataFor(date, workerId, jobId);
+        IncomeDTO incomeData = incomeService.geIncomeDataFor(date, null, workerId, jobId);
         if (incomeData == null) {
             return new ResponseEntity<>("Data not found.", HttpStatus.NOT_FOUND);
         }
@@ -31,7 +31,17 @@ public class IncomeController {
 
     @GetMapping("/{workerId}/calculate")
     public ResponseEntity<?> getAllIncomeData(@RequestParam("date") LocalDate date, @PathVariable int workerId) {
-        IncomeDTO incomeData = incomeService.geIncomeDataFor(date, workerId, -1);
+        IncomeDTO incomeData = incomeService.geIncomeDataFor(date, null, workerId, -1);
+        if (incomeData == null) {
+            return new ResponseEntity<>("Data not found.", HttpStatus.NOT_FOUND);
+        }
+
+        return ResponseEntity.ok(incomeData);
+    }
+
+    @GetMapping("/{workerId}/calculate-by-range")
+    public ResponseEntity<?> getAllIncomeDataFromRange(@RequestParam("start-date") LocalDate startDate, @RequestParam("end-date") LocalDate endDate, @PathVariable int workerId) {
+        IncomeDTO incomeData = incomeService.geIncomeDataFor(startDate, endDate, workerId, -1);
         if (incomeData == null) {
             return new ResponseEntity<>("Data not found.", HttpStatus.NOT_FOUND);
         }

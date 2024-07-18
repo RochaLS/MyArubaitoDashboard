@@ -24,10 +24,15 @@ public class IncomeService {
     }
 
 
-    public IncomeDTO geIncomeDataFor(LocalDate fromDate, int workerId, int jobId) {
+    public IncomeDTO geIncomeDataFor(LocalDate fromDate, LocalDate endDate, int workerId, int jobId) {
         List<Shift> shifts;
         if (jobId == -1) {
-            shifts = shiftService.getAllShiftsByWorkerFrom(fromDate, workerId);
+            if (endDate == null) {
+                shifts = shiftService.getAllShiftsByWorkerFrom(fromDate, workerId);
+            } else {
+                shifts = shiftService.getAllShiftsInRangeByWorker(workerId, fromDate, endDate);
+            }
+
         } else {
             shifts = shiftService.getShiftsFrom(fromDate, workerId, jobId);
         }
