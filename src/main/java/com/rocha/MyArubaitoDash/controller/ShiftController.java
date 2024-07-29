@@ -6,10 +6,12 @@ import com.rocha.MyArubaitoDash.service.ShiftService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -29,6 +31,19 @@ public class ShiftController {
         if (shifts.isEmpty()) {
             return new ResponseEntity<>("Shift not found", HttpStatus.NOT_FOUND);
         }
+
+        return ResponseEntity.ok(shifts);
+    }
+
+    @GetMapping("byWorker-paginated/{id}")
+    public ResponseEntity<?> getShiftByWorkerFromDate(@RequestParam("date") LocalDate date, @PathVariable int id, @RequestParam int page, @RequestParam int size) {
+        Page<Shift> shifts = shiftService.getAllShiftsByWorkerFromPaginated(date, id, page, size);
+
+        if (shifts.isEmpty()) {
+            return new ResponseEntity<>("Shift not found", HttpStatus.NOT_FOUND);
+        }
+
+        System.out.println("Paginated shifts: " + shifts.get());
 
         return ResponseEntity.ok(shifts);
     }

@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.chrono.ChronoLocalDate;
+import java.time.chrono.ChronoLocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,11 +32,14 @@ public class IncomeService {
         if (jobId == -1) {
             if (endDate == null) {
                 shifts = shiftService.getAllShiftsByWorkerFrom(fromDate, workerId);
+                System.out.println("Getting shifts from " + fromDate);
             } else {
                 shifts = shiftService.getAllShiftsInRangeByWorker(workerId, fromDate, endDate);
+                System.out.println("Got shifts from " + fromDate + " to " + endDate);
             }
 
         } else {
+            System.out.println("Im in the else sadly");
             shifts = shiftService.getShiftsFrom(fromDate, workerId, jobId);
         }
 
@@ -79,17 +83,27 @@ public class IncomeService {
 
         System.out.println("Total hours: " + totalHours + " times hourly rates = " + grossPay);
 
-        Shift nextShift = shifts.stream().filter(shift -> shift.getStartDate().isAfter(ChronoLocalDate.from(LocalDateTime.now()))).findFirst().orElse(null);
+        // Need a better way to this, if using filters and the user is at end of week or month it bugs.
+        Shift nextShift = shifts.stream()
+                .filter(shift -> LocalDateTime.of(shift.getStartDate(), shift.getStartTime()).isAfter(LocalDateTime.now()))
+                .findFirst()
+                .orElse(null);
         ShiftDTO nextShiftDTO = shiftDTOS.stream().filter(shift -> shift.getStartDate().isAfter(ChronoLocalDate.from(LocalDateTime.now()))).findFirst().orElse(null);
+
         float nextShiftDuration = calculateShiftDuration(nextShift);
 
 
+        System.out.println("SHIFTS: " + shiftDTOS);
         return new IncomeDTO(grossPay, shiftDTOS, nextShiftDTO, nextShiftDuration, new BigDecimal(nextShiftDuration).multiply(jobHourlyRateMap.get(shiftDTOS.get(0).getJobId())), totalHours);
     }
 
 
 
     private float calculateShiftDuration(Shift shift) {
+
+        if (shift == null) {
+            return 0;
+        }
 //        float shiftDuration = ChronoUnit.HOURS.between(shift.getStartTime(), shift.getEndTime());
 
         // Need to calculate shift duration in minutes first and then convert to hours...

@@ -10,6 +10,9 @@ import com.rocha.MyArubaitoDash.repository.WorkerRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cglib.core.Local;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -141,6 +144,12 @@ public class ShiftService {
 
     public List<Shift> getAllShiftsInRangeByWorker(int workerId, LocalDate startDate, LocalDate endDate) {
         return shiftRepository.findShiftsInRange(workerId, startDate, endDate);
+    }
+
+    public Page<Shift> getAllShiftsByWorkerFromPaginated(LocalDate date, int workerId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return shiftRepository.findAllShiftsByWorkerFromSpecificDatePaginated(workerId, date, pageable);
+
     }
 
 }
