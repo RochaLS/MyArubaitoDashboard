@@ -4,24 +4,28 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.rocha.MyArubaitoDash.dto.ShiftDTO;
+import com.rocha.MyArubaitoDash.service.AIUsageService;
 import com.rocha.MyArubaitoDash.service.GeminiClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.security.Principal;
+import java.util.*;
 
 @RestController
 public class GeminiController {
     @Autowired
     private GeminiClient geminiClient;
+
+    private final AIUsageService aiUsageService;
+
+    public GeminiController(AIUsageService aiUsageService) {
+        this.aiUsageService = aiUsageService;
+    }
 
     @GetMapping("/test-gemini-connection")
     public ResponseEntity<String> testGeminiConnection() {
@@ -29,13 +33,28 @@ public class GeminiController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/process-image")
-    public ResponseEntity<String> processImage(@RequestParam("file") MultipartFile file) {
+    @PostMapping("/{workerId}/process-image")
+    public ResponseEntity<?> processImage(@RequestParam("file") MultipartFile file, @PathVariable int workerId) {
+
+        aiUsageService.resetImportCountIfNeeded(workerId);
+
+        if (!aiUsageService.canImport(workerId)) {
+            Map<String, Object> responseBody = new HashMap<>();
+            responseBody.put("resetDate", aiUsageService.getOrCreateAIUsage(workerId).getResetDate());
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(responseBody);
+        }
+
         try {
             String response = geminiClient.processImage(file);
-            System.out.println(response);
 
-            return ResponseEntity.status(200).body(response);
+            if (response != null && !response.contains("error") && !response.isEmpty()) {
+                aiUsageService.incrementImportCount(workerId);
+                return ResponseEntity.status(200).body(response);
+            }
+
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Failed to process image: Invalid response.");
+
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
