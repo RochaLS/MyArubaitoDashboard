@@ -1,6 +1,7 @@
 package com.rocha.MyArubaitoDash.dto;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -22,6 +23,7 @@ It's highly adaptable!
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ShiftDTO {
     @JsonProperty("worker_id") // This explicitly helps with the mapping. Having issues without it :(
     private int workerId;
@@ -42,7 +44,6 @@ public class ShiftDTO {
     @NotNull
     private LocalTime endTime;
 
-    @NotNull
     private String shiftType;
 
     private int id;

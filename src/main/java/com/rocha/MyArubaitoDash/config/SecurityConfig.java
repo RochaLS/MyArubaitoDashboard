@@ -36,6 +36,8 @@ public class SecurityConfig {
                         .requestMatchers("/password-reset/reset").permitAll()
                         .requestMatchers("/login").permitAll()
                         .requestMatchers("/api/validate-session").permitAll()
+                        .requestMatchers("/test-gemini-connection").permitAll()
+                        .requestMatchers("/process-image").permitAll()
                         .anyRequest().authenticated()
                 )
                 .csrf().disable()

@@ -12,7 +12,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/shift")
@@ -33,6 +37,26 @@ public class ShiftController {
         }
 
         return ResponseEntity.ok(shifts);
+    }
+
+    @PostMapping("checkDuplicateShiftsByJob/{id}")
+    public ResponseEntity<?> getShiftsByJobId(@PathVariable int id, @RequestBody ArrayList<ShiftDTO> shiftDTOs) {
+        List<Shift> shiftsInDB = shiftService.getShiftsByJobId(id);
+        Set<LocalDate> startDateSetInDB = shiftsInDB.stream()
+                .map(Shift::getStartDate)
+                .collect(Collectors.toSet());
+
+
+        // Find unique shifts by filtering out those with startDate already present in startDateSetInDB
+        List<ShiftDTO> uniqueShifts = shiftDTOs.stream()
+                .filter(importedShift -> {
+                    LocalDate startDate = importedShift.getStartDate();
+                    System.out.println("Checking date: " + startDate);
+                    return !startDateSetInDB.contains(startDate);
+                }).sorted(Comparator.comparing(ShiftDTO::getStartDate)).collect(Collectors.toList());
+
+        return ResponseEntity.ok(uniqueShifts);
+
     }
 
     @GetMapping("byWorker-paginated/{id}")
@@ -74,6 +98,24 @@ public class ShiftController {
                 return new ResponseEntity<>("Error adding shift. " + e.getMessage(), HttpStatus.BAD_REQUEST);
             }
             return new ResponseEntity<>("Error adding shift. " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("/add-multiple")
+    public ResponseEntity<?> addMultipleShifts(@RequestBody @Valid ArrayList<ShiftDTO> shiftDTOs) {
+        try {
+            if (shiftDTOs.isEmpty()) {
+                return new ResponseEntity<>("Empty shift data", HttpStatus.BAD_REQUEST);
+            }
+
+            //Save each shift
+            for (ShiftDTO shiftDTO : shiftDTOs) {
+                shiftService.createShift(shiftDTO);
+            }
+
+            return new ResponseEntity<>("Imported shifts successfully", HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error adding shifts. " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
