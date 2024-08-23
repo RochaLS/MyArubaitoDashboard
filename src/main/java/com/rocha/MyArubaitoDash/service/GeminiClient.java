@@ -61,7 +61,7 @@ public class GeminiClient {
                         "\"parts\": [" +
                         "{\"text\": \"Please extract the date, start time, and end time for each shift from the provided work schedule screenshot. Format the output into a JSON object as follows: \\n\\n" +
                         "- Use military time format (e.g., 22:00) for start and end times.\\n" +
-                        "- Exclude the year and month; provide only the date, start time, and end time for each shift.\\n" +
+                        "- Exclude the year; provide only the date, start time, end time, and month for each shift.\\n" +
                         "- If the image is not a schedule or calendar, return 0.\\n\\n" +
                         "The JSON structure should be: \\n\\n" +
                         "{\\n" +
@@ -70,11 +70,12 @@ public class GeminiClient {
                         "      \\\"date\\\": \\\"DD\\\",\\n" +
                         "      \\\"start_time\\\": \\\"HHMM\\\",\\n" +
                         "      \\\"end_time\\\": \\\"HHMM\\\"\\n" +
+                        "      \\\"month\\\": M\\n" +
                         "    },\\n" +
                         "    ...\\n" +
                         "  ]\\n" +
                         "}\\n\\n" +
-                        "Ensure that the JSON object contains only the list of shifts with their date, start time, and end time.\"}," +
+                        "Ensure that the JSON object contains only the list of shifts with their date, start time, end time and month.\"}," +
                         "{\"inline_data\": {" +
                         "\"mime_type\": \"image/png\"," +
                         "\"data\": \"%s\"" +
