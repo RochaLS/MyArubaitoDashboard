@@ -1,6 +1,7 @@
 package com.rocha.MyArubaitoDash.service;
 
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -19,7 +20,9 @@ public class GeminiClient {
 
     private final RestTemplate restTemplate;
     private final String geminiApiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
-    private final String apiKey = "AIzaSyDR-35JBdoyasyK8xkGTEiV1dpmWVX4W2s"; // Replace with your actual API key
+
+    @Value("${GEMINI_API_KEY}")
+    private String apiKey;
 
     public GeminiClient() {
         this.restTemplate = new RestTemplate();
