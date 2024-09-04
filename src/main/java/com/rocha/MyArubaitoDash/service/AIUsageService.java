@@ -54,6 +54,6 @@ public class AIUsageService {
     }
 
     public int getMaxImports() {
-        return 100;
+        return 15;
     }
 }
