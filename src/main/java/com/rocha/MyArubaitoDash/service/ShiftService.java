@@ -70,6 +70,7 @@ public class ShiftService {
                 shiftToBeUpdated.setStartDate(shiftDTO.getStartDate());
                 shiftToBeUpdated.setEndDate(shiftDTO.getEndDate());
                 shiftToBeUpdated.setShiftType(shiftDTO.getShiftType());
+                shiftToBeUpdated.setIsHoliday(shiftDTO.getIsHoliday());
 
                 Job job = jobRepository.findById(shiftDTO.getJobId())
                         .orElseThrow(() -> new IllegalArgumentException("Job not found with id: " + shiftDTO.getJobId()));
@@ -130,6 +131,7 @@ public class ShiftService {
         shift.setEndDate(shiftDTO.getEndDate());
         shift.setEndTime(shiftDTO.getEndTime());
         shift.setShiftType(shiftDTO.getShiftType());
+        shift.setIsHoliday(shiftDTO.getIsHoliday());
 
         return shift;
     }

@@ -67,6 +67,7 @@ public class IncomeService {
                     shift.getEndDate(),
                     shift.getEndTime(),
                     shift.getShiftType(),
+                    shift.getIsHoliday(),
                     shift.getId()
             ));
 

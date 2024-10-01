@@ -46,6 +46,8 @@ public class ShiftDTO {
 
     private String shiftType;
 
+    private Boolean isHoliday;
+
     private int id;
 
 }

@@ -23,6 +23,7 @@ public class Shift {
     private LocalDate endDate;
     private LocalTime endTime;
     private String shiftType;
+    private Boolean isHoliday;
 
     // If I were to implement eager loading in the future:
 
