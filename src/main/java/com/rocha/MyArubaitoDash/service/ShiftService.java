@@ -110,6 +110,9 @@ public class ShiftService {
            Shift shiftToAdd =  convertDTOToEntity(shiftDTO);
            shiftToAdd.setWorker(worker);
            shiftToAdd.setJob(job);
+           if (shiftToAdd.getIsHoliday() == null) {
+               shiftToAdd.setIsHoliday(false);
+           }
            shiftRepository.save(shiftToAdd);
        } catch (EntityNotFoundException e) {
            throw  e;
