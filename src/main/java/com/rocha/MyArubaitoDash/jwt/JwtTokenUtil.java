@@ -1,6 +1,5 @@
-package com.rocha.MyArubaitoDash.config;
+package com.rocha.MyArubaitoDash.jwt;
 
-import com.rocha.MyArubaitoDash.model.Worker;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
