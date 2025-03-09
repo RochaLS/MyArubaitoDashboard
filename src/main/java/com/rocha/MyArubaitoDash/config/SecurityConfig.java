@@ -40,7 +40,7 @@ public class SecurityConfig {
                         .requestMatchers("/process-image").permitAll()
                         .anyRequest().authenticated()
                 )
-                .csrf().disable()
+//                .csrf().disable()
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .httpBasic(Customizer.withDefaults())
