@@ -11,6 +11,7 @@ import org.springframework.lang.NonNullApi;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -20,7 +21,7 @@ import java.io.IOException;
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
     // Dependencies for JWT processing and user details retrieval
-    private final CustomUserDetailsService customUserDetailsService;
+    private final UserDetailsService customUserDetailsService;
     private final JwtTokenUtil jwtTokenUtil;
 
     /**
@@ -29,7 +30,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
      * @param jwtTokenUtil Utility to validate and extract data from JWT tokens
      */
     @Autowired
-    public JwtRequestFilter(CustomUserDetailsService customUserDetailsService, JwtTokenUtil jwtTokenUtil) {
+    public JwtRequestFilter(UserDetailsService customUserDetailsService, JwtTokenUtil jwtTokenUtil) {
         this.customUserDetailsService = customUserDetailsService;
         this.jwtTokenUtil = jwtTokenUtil;
     }
@@ -79,5 +80,12 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
         // Continue with the filter chain
         filterChain.doFilter(request, response);
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        // Important: Only apply this filter to mobile API paths
+        String path = request.getRequestURI();
+        return !path.startsWith("/api/mobile/");
     }
 }
