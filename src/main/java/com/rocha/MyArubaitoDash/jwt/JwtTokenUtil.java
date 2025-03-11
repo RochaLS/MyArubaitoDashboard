@@ -31,6 +31,12 @@ public class JwtTokenUtil {
     public String generateToken(String email) {
         Map<String, Object> claims = new HashMap<>();
 
+        Date now = new Date();
+        claims.put("iat", now.getTime() / 1000); // Issued at time
+        claims.put("exp", (now.getTime() + (60 * 60 * 1000)) / 1000); // Expires in 30 minutes
+        claims.put("iss", "Baito"); // Issuer
+        claims.put("sub", email); // Subject (email as identifier)
+
         return createToken(claims, email);
     }
 
