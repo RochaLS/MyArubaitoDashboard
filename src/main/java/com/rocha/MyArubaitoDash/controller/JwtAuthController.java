@@ -76,6 +76,23 @@ public class JwtAuthController {
         }
     }
 
+    @PostMapping("validate-token")
+    public ResponseEntity<?> validateToken(@RequestHeader("Authorization") String authorization) {
+        try {
+            String token = authorization.substring(7);
+            String email = jwtTokenUtil.extractEmail(token);
+
+            // Check if token is valid
+            if (email != null && jwtTokenUtil.validateToken(token, email)) {
+                return ResponseEntity.ok().body("Token is valid");
+            }
+
+            return ResponseEntity.status(401).body("Invalid token");
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body("Token refresh failed: " + e.getMessage());
+        }
+    }
+
 
 
 }
