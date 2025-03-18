@@ -4,7 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import lombok.Value;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -16,10 +16,10 @@ import java.util.function.Function;
 @Component
 public class JwtTokenUtil {
 
-    @Value("${jwt.secret}")
+    @Value("${JWT_SECRET}")
     private String secretKey;
 
-    @Value("${jwt.expiration}")
+    @Value("${JWT_EXPIRATION}")
     private long expiration;
 
     // Creates key to be sued to sign the JWT
@@ -28,8 +28,15 @@ public class JwtTokenUtil {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateToken(String email) {
+    public String generateToken(String email, int id) {
         Map<String, Object> claims = new HashMap<>();
+
+        Date now = new Date();
+        claims.put("iat", now.getTime() / 1000); // Issued at time
+        claims.put("exp", (now.getTime() + (60 * 60 * 1000)) / 1000); // Expires in 30 minutes
+        claims.put("iss", "Baito"); // Issuer
+        claims.put("sub", email); // Subject (email as identifier)
+        claims.put("worker_id", id);
 
         return createToken(claims, email);
     }
