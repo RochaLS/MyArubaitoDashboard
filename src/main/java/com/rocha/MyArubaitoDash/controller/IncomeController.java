@@ -33,8 +33,12 @@ public class IncomeController {
     public ResponseEntity<?> getAllIncomeData(@RequestParam("date") LocalDate date, @PathVariable int workerId) {
         IncomeDTO incomeData = incomeService.geIncomeDataFor(date, null, workerId, -1);
         if (incomeData == null) {
+
+            System.out.println("Data not found");
             return new ResponseEntity<>("Data not found.", HttpStatus.NOT_FOUND);
         }
+
+        System.out.println("Data sent to client: " + incomeData);
 
         return ResponseEntity.ok(incomeData);
     }

@@ -33,7 +33,7 @@ public class SecurityConfig {
 
 
     @Bean
-//    @Order(1)
+    @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests((authorize) -> authorize
@@ -61,10 +61,13 @@ public class SecurityConfig {
 
     // JWT Configuration for Mobile API endpoints
     @Bean
-    @Order(2)
-    public SecurityFilterChain mobileApiSecurityFilterChain(HttpSecurity http, CustomUserDetailsService customUserDetailsService, JwtTokenUtil jwtTokenUtil) throws Exception {
+    @Order(1)
+    public SecurityFilterChain MobileApiSecurityFilterChain(HttpSecurity http, UserDetailsService customUserDetailsService, JwtTokenUtil jwtTokenUtil) throws Exception {
         http
-                .securityMatcher("/api/mobile/**")
+                .securityMatcher(request -> {
+                    String path = request.getServletPath();
+                    return path.startsWith("/api/mobile/") || path.startsWith("/api/income/");
+                })
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/mobile/auth/**").permitAll()
                         .anyRequest().authenticated()
@@ -73,11 +76,15 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .exceptionHandling(customizer -> customizer
-                        .authenticationEntryPoint(new CustomAuthEntryPoint())
-                );
-//                .addFilterBefore(new JwtRequestFilter(customUserDetailsService, jwtTokenUtil),
-//                        UsernamePasswordAuthenticationFilter.class);
+                .exceptionHandling(handler -> handler
+                        .authenticationEntryPoint((request, response, exception) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"Authentication failed\"}");
+                        })
+                )
+                .addFilterBefore(new JwtRequestFilter(customUserDetailsService, jwtTokenUtil),
+                        UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

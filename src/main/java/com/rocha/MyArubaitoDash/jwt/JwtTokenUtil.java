@@ -28,7 +28,7 @@ public class JwtTokenUtil {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateToken(String email) {
+    public String generateToken(String email, int id) {
         Map<String, Object> claims = new HashMap<>();
 
         Date now = new Date();
@@ -36,6 +36,7 @@ public class JwtTokenUtil {
         claims.put("exp", (now.getTime() + (60 * 60 * 1000)) / 1000); // Expires in 30 minutes
         claims.put("iss", "Baito"); // Issuer
         claims.put("sub", email); // Subject (email as identifier)
+        claims.put("worker_id", id);
 
         return createToken(claims, email);
     }

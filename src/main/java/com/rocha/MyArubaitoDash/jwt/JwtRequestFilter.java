@@ -84,8 +84,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        // Important: Only apply this filter to mobile API paths
         String path = request.getRequestURI();
-        return !path.startsWith("/api/mobile/");
+        return !(path.startsWith("/api/mobile/") || path.startsWith("/api/income/"));
     }
 }

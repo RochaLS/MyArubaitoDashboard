@@ -3,6 +3,8 @@ package com.rocha.MyArubaitoDash.controller;
 import com.rocha.MyArubaitoDash.jwt.JwtTokenUtil;
 import com.rocha.MyArubaitoDash.model.JwtRequest;
 import com.rocha.MyArubaitoDash.model.JwtResponse;
+import com.rocha.MyArubaitoDash.model.Worker;
+import com.rocha.MyArubaitoDash.repository.WorkerRepository;
 import com.rocha.MyArubaitoDash.service.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
 
 import static org.apache.http.impl.auth.BasicScheme.authenticate;
@@ -22,13 +25,15 @@ public class JwtAuthController {
 
     final private JwtTokenUtil jwtTokenUtil;
     final private AuthenticationManager authenticationManager;
-    final private CustomUserDetailsService customUserDetailsService;
+    final private UserDetailsService userDetailsService;
+    private final WorkerRepository workerRepository;
 
     @Autowired
-    public JwtAuthController(JwtTokenUtil jwtTokenUtil, AuthenticationManager authenticationManager, CustomUserDetailsService customUserDetailsService) {
+    public JwtAuthController(JwtTokenUtil jwtTokenUtil, AuthenticationManager authenticationManager, UserDetailsService userDetailsService, WorkerRepository workerRepository) {
         this.jwtTokenUtil = jwtTokenUtil;
         this.authenticationManager = authenticationManager;
-        this.customUserDetailsService = customUserDetailsService;
+        this.userDetailsService = userDetailsService;
+        this.workerRepository = workerRepository;
     }
 
     @PostMapping("/login")
@@ -47,9 +52,15 @@ public class JwtAuthController {
 
             // Get authenticated user details
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            System.out.println(userDetails.getUsername());
+
+            // Username is email, sorry i know it's weird
+            Worker worker = workerRepository.findWorkerByEmail(userDetails.getUsername());
+
+
 
             // Generate token
-            final String token = jwtTokenUtil.generateToken(userDetails.getUsername());
+            final String token = jwtTokenUtil.generateToken(userDetails.getUsername(), worker.getId());
 
             return ResponseEntity.ok(new JwtResponse(token));
 
@@ -66,7 +77,8 @@ public class JwtAuthController {
 
             // Check if token is valid
             if (email != null && jwtTokenUtil.validateToken(token, email)) {
-                final String newToken = jwtTokenUtil.generateToken(email);
+                Worker worker = workerRepository.findWorkerByEmail(email);
+                final String newToken = jwtTokenUtil.generateToken(email, worker.getId());
                 return ResponseEntity.ok(new JwtResponse(newToken));
             }
 
