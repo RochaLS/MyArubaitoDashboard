@@ -31,44 +31,20 @@ import org.springframework.session.web.http.HttpSessionIdResolver;
 @Configuration
 public class SecurityConfig {
 
-
     @Bean
-    @Order(2)
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   UserDetailsService customUserDetailsService,
+                                                   JwtTokenUtil jwtTokenUtil) throws Exception {
         http
                 .authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers("/api/worker/add").permitAll()
-                        .requestMatchers("api/worker/check-account").permitAll()
+                        .requestMatchers("/api/worker/check-account").permitAll()
                         .requestMatchers("/password-reset/request").permitAll()
                         .requestMatchers("/password-reset/reset").permitAll()
                         .requestMatchers("/login").permitAll()
                         .requestMatchers("/api/validate-session").permitAll()
                         .requestMatchers("/test-gemini-connection").permitAll()
-                        .requestMatchers("/process-image").permitAll()
-                        .anyRequest().authenticated()
-                )
-                .csrf().disable()
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
-                .httpBasic(Customizer.withDefaults())
-                .exceptionHandling(customizer -> customizer
-                        .authenticationEntryPoint(new CustomAuthEntryPoint())
-
-                );
-
-        return http.build();
-    }
-
-    // JWT Configuration for Mobile API endpoints
-    @Bean
-    @Order(1)
-    public SecurityFilterChain MobileApiSecurityFilterChain(HttpSecurity http, UserDetailsService customUserDetailsService, JwtTokenUtil jwtTokenUtil) throws Exception {
-        http
-                .securityMatcher(request -> {
-                    String path = request.getServletPath();
-                    return path.startsWith("/api/mobile/") || path.startsWith("/api/income/") || path.startsWith("/api/shift/");
-                })
-                .authorizeHttpRequests(authorize -> authorize
+//                        .requestMatchers("/process-image").permitAll()
                         .requestMatchers("/api/mobile/auth/**").permitAll()
                         .anyRequest().authenticated()
                 )
@@ -88,6 +64,64 @@ public class SecurityConfig {
 
         return http.build();
     }
+
+
+//    @Bean
+//    @Order(2)
+//    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+//        http
+//                .authorizeHttpRequests((authorize) -> authorize
+//                        .requestMatchers("/api/worker/add").permitAll()
+//                        .requestMatchers("api/worker/check-account").permitAll()
+//                        .requestMatchers("/password-reset/request").permitAll()
+//                        .requestMatchers("/password-reset/reset").permitAll()
+//                        .requestMatchers("/login").permitAll()
+//                        .requestMatchers("/api/validate-session").permitAll()
+//                        .requestMatchers("/test-gemini-connection").permitAll()
+//                        .requestMatchers("/process-image").permitAll()
+//                        .anyRequest().authenticated()
+//                )
+//                .csrf().disable()
+//                .sessionManagement(session -> session
+//                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+//                .httpBasic(Customizer.withDefaults())
+//                .exceptionHandling(customizer -> customizer
+//                        .authenticationEntryPoint(new CustomAuthEntryPoint())
+//
+//                );
+//
+//        return http.build();
+//    }
+//
+//    // JWT Configuration for Mobile API endpoints
+//    @Bean
+//    @Order(1)
+//    public SecurityFilterChain MobileApiSecurityFilterChain(HttpSecurity http, UserDetailsService customUserDetailsService, JwtTokenUtil jwtTokenUtil) throws Exception {
+//        http
+//                .securityMatcher(request -> {
+//                    String path = request.getServletPath();
+//                    return path.startsWith("/api/mobile/") || path.startsWith("/api/income/") || path.startsWith("/api/shift/");
+//                })
+//                .authorizeHttpRequests(authorize -> authorize
+//                        .requestMatchers("/api/mobile/auth/**").permitAll()
+//                        .anyRequest().authenticated()
+//                )
+//                .csrf(csrf -> csrf.disable())
+//                .sessionManagement(session -> session
+//                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+//                )
+//                .exceptionHandling(handler -> handler
+//                        .authenticationEntryPoint((request, response, exception) -> {
+//                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+//                            response.setContentType("application/json");
+//                            response.getWriter().write("{\"error\":\"Unauthorized\",\"message\":\"Authentication failed\"}");
+//                        })
+//                )
+//                .addFilterBefore(new JwtRequestFilter(customUserDetailsService, jwtTokenUtil),
+//                        UsernamePasswordAuthenticationFilter.class);
+//
+//        return http.build();
+//    }
 
 
     @Bean
