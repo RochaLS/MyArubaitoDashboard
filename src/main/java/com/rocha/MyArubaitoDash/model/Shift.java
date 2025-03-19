@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -24,6 +25,12 @@ public class Shift {
     private LocalTime endTime;
     private String shiftType;
     private Boolean isHoliday;
+
+    @Transient
+    private BigDecimal moneyValue;
+
+    @JsonIgnore
+    private String encryptedMoneyValue;
 
     // If I were to implement eager loading in the future:
 
