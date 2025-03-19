@@ -11,11 +11,14 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -26,13 +29,18 @@ public class ShiftService {
     private final ShiftRepository shiftRepository;
     private final WorkerRepository workerRepository;
     private final JobRepository jobRepository;
+    private final JobService jobService;
+    private final EncryptionService encryptionService;
 
     @Autowired
-    public ShiftService(ShiftRepository shiftRepository, WorkerRepository workerRepository, JobRepository jobRepository) {
+    public ShiftService(ShiftRepository shiftRepository, WorkerRepository workerRepository, JobRepository jobRepository, JobService jobService, EncryptionService encryptionService) {
         this.shiftRepository = shiftRepository;
         this.workerRepository = workerRepository;
         this.jobRepository = jobRepository;
+        this.jobService = jobService;
+        this.encryptionService = encryptionService;
     }
+
 
     public ArrayList<Shift> getShiftsByJobId(int jobId) {
         return shiftRepository.findAllByJobId(jobId);
@@ -102,13 +110,18 @@ public class ShiftService {
     public void createShift(ShiftDTO shiftDTO) throws EntityNotFoundException{
        try {
            Worker worker = workerRepository.findById(shiftDTO.getWorkerId()).orElse(null);
-           Job job = jobRepository.findById(shiftDTO.getJobId()).orElse(null);
+           Job job = jobService.getJobById(shiftDTO.getJobId());
 
            if (worker == null || job == null) {
                throw new EntityNotFoundException("Worker or job not found."); // NOT WORKING CHECK LATER
            }
            Shift shiftToAdd =  convertDTOToEntity(shiftDTO);
            shiftToAdd.setWorker(worker);
+           // Calculating money value for the shift
+           float shiftDuration = calculateShiftDuration(shiftToAdd);
+           BigDecimal bonusRate = shiftToAdd.getIsHoliday() ? BigDecimal.valueOf(1.5) : BigDecimal.ONE;
+           shiftToAdd.setMoneyValue(new BigDecimal(shiftDuration).multiply(job.getHourlyRate().multiply(bonusRate)));
+           shiftToAdd.setEncryptedMoneyValue(encryptionService.encrypt(shiftToAdd.getMoneyValue().toString()));
            shiftToAdd.setJob(job);
            if (shiftToAdd.getIsHoliday() == null) {
                shiftToAdd.setIsHoliday(false);
@@ -120,6 +133,15 @@ public class ShiftService {
        catch (Exception e) {
            System.out.println(e.getMessage());
        }
+    }
+
+    private float calculateShiftDuration(Shift shift) {
+        if (shift == null) {
+            return 0;
+        }
+        long minutesDifference = ChronoUnit.MINUTES.between(shift.getStartTime(), shift.getEndTime());
+        float shiftDuration = minutesDifference / 60.0f;
+        return shiftDuration >= 5 ? shiftDuration - 0.5f : shiftDuration; // - 30min break
     }
 
     private Shift convertDTOToEntity(ShiftDTO shiftDTO) {
@@ -140,21 +162,36 @@ public class ShiftService {
     }
 
     public List<Shift> getShiftsFrom(LocalDate date, int workerId, int jobId) {
-        return shiftRepository.findShiftsFromSpecificDate(jobId, workerId, date);
+        List<Shift> shifts = shiftRepository.findShiftsFromSpecificDate(jobId, workerId, date);
+        return decryptShifts(shifts);
     }
 
     public List<Shift> getAllShiftsByWorkerFrom(LocalDate date, int workerId) {
-        return shiftRepository.findAllShiftsByWorkerFromSpecificDate(workerId, date);
+        List<Shift> shifts = shiftRepository.findAllShiftsByWorkerFromSpecificDate(workerId, date);
+        return decryptShifts(shifts);
     }
 
     public List<Shift> getAllShiftsInRangeByWorker(int workerId, LocalDate startDate, LocalDate endDate) {
-        return shiftRepository.findShiftsInRange(workerId, startDate, endDate);
+        List<Shift> shifts = shiftRepository.findShiftsInRange(workerId, startDate, endDate);
+        return decryptShifts(shifts);
     }
 
     public Page<Shift> getAllShiftsByWorkerFromPaginated(LocalDate date, int workerId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return shiftRepository.findAllShiftsByWorkerFromSpecificDatePaginated(workerId, date, pageable);
+        Page<Shift> shiftPage = shiftRepository.findAllShiftsByWorkerFromSpecificDatePaginated(workerId, date, pageable);
 
+        List<Shift> decryptedShifts = decryptShifts(shiftPage.getContent());
+        return new PageImpl<>(decryptedShifts, pageable, shiftPage.getTotalElements());
+    }
+
+    private List<Shift> decryptShifts(List<Shift> shifts) {
+        for (Shift shift : shifts) {
+            if (shift.getEncryptedMoneyValue() != null) {
+                String decryptedValue = encryptionService.decrypt(shift.getEncryptedMoneyValue());
+                shift.setMoneyValue(new BigDecimal(decryptedValue));
+            }
+        }
+        return shifts;
     }
 
 }

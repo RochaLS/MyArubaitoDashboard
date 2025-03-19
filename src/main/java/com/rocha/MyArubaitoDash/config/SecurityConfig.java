@@ -66,7 +66,7 @@ public class SecurityConfig {
         http
                 .securityMatcher(request -> {
                     String path = request.getServletPath();
-                    return path.startsWith("/api/mobile/") || path.startsWith("/api/income/");
+                    return path.startsWith("/api/mobile/") || path.startsWith("/api/income/") || path.startsWith("/api/shift/");
                 })
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/mobile/auth/**").permitAll()

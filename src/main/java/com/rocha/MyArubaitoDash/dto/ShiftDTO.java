@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -49,5 +50,7 @@ public class ShiftDTO {
     private Boolean isHoliday;
 
     private int id;
+
+    private BigDecimal moneyValue;
 
 }
