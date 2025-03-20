@@ -67,6 +67,7 @@ public class ShiftService {
 
     public void updateShift(int id, ShiftDTO shiftDTO) {
 
+        System.out.println("UPDATING SHIFT:");
         System.out.println(shiftDTO);
         try {
             Optional<Shift> optionalShift = shiftRepository.findById(id);
@@ -80,10 +81,21 @@ public class ShiftService {
                 shiftToBeUpdated.setShiftType(shiftDTO.getShiftType());
                 shiftToBeUpdated.setIsHoliday(shiftDTO.getIsHoliday());
 
-                Job job = jobRepository.findById(shiftDTO.getJobId())
-                        .orElseThrow(() -> new IllegalArgumentException("Job not found with id: " + shiftDTO.getJobId()));
+                Job job = jobService.getJobById(shiftDTO.getJobId());
+
+                if (job == null) {
+                    throw new EntityNotFoundException("Job not found."); // NOT WORKING CHECK LATER
+                }
 
                 shiftToBeUpdated.setJob(job);
+
+                float shiftDuration = calculateShiftDuration(shiftToBeUpdated);
+                BigDecimal bonusRate = shiftToBeUpdated.getIsHoliday() ? BigDecimal.valueOf(1.5) : BigDecimal.ONE;
+                shiftToBeUpdated.setMoneyValue(new BigDecimal(shiftDuration).multiply(job.getHourlyRate().multiply(bonusRate)));
+                shiftToBeUpdated.setEncryptedMoneyValue(encryptionService.encrypt(shiftToBeUpdated.getMoneyValue().toString()));
+
+                System.out.println(shiftToBeUpdated.getMoneyValue().toString());
+                System.out.println("WILL SAVE NOW ============================");
                 shiftRepository.save(shiftToBeUpdated);
             }
         } catch (Exception e) {
