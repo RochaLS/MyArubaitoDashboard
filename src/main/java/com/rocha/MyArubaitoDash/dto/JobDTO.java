@@ -1,5 +1,6 @@
 package com.rocha.MyArubaitoDash.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -21,6 +22,7 @@ public class JobDTO {
     @NotNull
     private BigDecimal hourlyRate;
 
+    @JsonProperty("worker_id")
     @NotNull
     private Integer workerId; // was int previously had to use the wrapper to apply validation
 }

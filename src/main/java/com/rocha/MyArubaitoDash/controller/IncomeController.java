@@ -46,9 +46,12 @@ public class IncomeController {
     @GetMapping("/{workerId}/calculate-by-range")
     public ResponseEntity<?> getAllIncomeDataFromRange(@RequestParam("start-date") LocalDate startDate, @RequestParam("end-date") LocalDate endDate, @PathVariable int workerId) {
         IncomeDTO incomeData = incomeService.geIncomeDataFor(startDate, endDate, workerId, -1);
+        System.out.println("Searching for shifts from " + startDate + " to " + endDate);
         if (incomeData == null) {
             return new ResponseEntity<>("Data not found.", HttpStatus.NOT_FOUND);
         }
+
+        System.out.println("Data sent to client: " + incomeData);
 
         return ResponseEntity.ok(incomeData);
     }
