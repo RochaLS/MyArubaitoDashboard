@@ -20,7 +20,7 @@ public interface ShiftRepository extends JpaRepository<Shift, Integer> {
     @Query(value = "SELECT * FROM shift WHERE  worker_id = ?1 AND (start_date >= ?2) ORDER BY start_date", nativeQuery = true)
     ArrayList<Shift> findAllShiftsByWorkerFromSpecificDate(int workerId, LocalDate startDate);
 
-    @Query(value = "SELECT * FROM shift WHERE worker_id = ?1 AND start_date >= ?2 AND start_date < ?3 ORDER BY start_date", nativeQuery = true)
+    @Query(value = "SELECT * FROM shift WHERE worker_id = ?1 AND start_date >= ?2 AND start_date <= ?3 ORDER BY start_date", nativeQuery = true)
     ArrayList<Shift> findShiftsInRange(int workerId, LocalDate startDate, LocalDate endDate);
 
     // Paginated queries
