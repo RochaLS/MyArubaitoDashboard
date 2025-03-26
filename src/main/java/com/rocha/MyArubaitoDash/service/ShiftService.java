@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -194,6 +195,11 @@ public class ShiftService {
 
         List<Shift> decryptedShifts = decryptShifts(shiftPage.getContent());
         return new PageImpl<>(decryptedShifts, pageable, shiftPage.getTotalElements());
+    }
+
+    public Shift getNextShiftForWorker(int workerId) {
+        LocalDateTime now = LocalDateTime.now();
+        return shiftRepository.findNextShiftForWorker(workerId, now);
     }
 
     private List<Shift> decryptShifts(List<Shift> shifts) {
