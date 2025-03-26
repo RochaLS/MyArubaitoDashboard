@@ -36,16 +36,40 @@ public class IncomeService {
         List<ShiftDTO> shiftDTOs = createShiftDTOs(shifts, workerId);
         BigDecimal grossPay = calculateGrossPay(shifts, jobHourlyRateMap);
 
-        ShiftDTO nextShiftDTO = getNextShiftDTO(shiftDTOs);
-        float nextShiftDuration = calculateShiftDuration(getNextShift(shifts));
+        // Get the next shift regardless of the date range
+        Shift nextShift = shiftService.getNextShiftForWorker(workerId);
+        ShiftDTO nextShiftDTO = null;
+        float nextShiftDuration = 0;
+        BigDecimal nextShiftPay = BigDecimal.ZERO;
 
-        // Calculate bonus such as holiday pay.
-        BigDecimal bonusRate = nextShiftDTO.getIsHoliday() ? BigDecimal.valueOf(1.5) : BigDecimal.ONE;
+        if (nextShift != null) {
+            // Create a list with just the next shift and extract the first item
+            List<Shift> nextShiftList = new ArrayList<>();
+            nextShiftList.add(nextShift);
+            List<ShiftDTO> nextShiftDTOs = createShiftDTOs(nextShiftList, workerId);
+            nextShiftDTO = !nextShiftDTOs.isEmpty() ? nextShiftDTOs.get(0) : null;
 
+            if (nextShiftDTO != null) {
+                nextShiftDuration = calculateShiftDuration(nextShift);
+
+                // Make sure we have the job's hourly rate
+                int nextJobId = nextShift.getJob().getId();
+                BigDecimal hourlyRate;
+                if (jobHourlyRateMap.containsKey(nextJobId)) {
+                    hourlyRate = jobHourlyRateMap.get(nextJobId);
+                } else {
+                    hourlyRate = jobService.getJobById(nextJobId).getHourlyRate();
+                    jobHourlyRateMap.put(nextJobId, hourlyRate);
+                }
+
+                // Calculate bonus
+                BigDecimal bonusRate = nextShiftDTO.getIsHoliday() ? BigDecimal.valueOf(1.5) : BigDecimal.ONE;
+                nextShiftPay = new BigDecimal(nextShiftDuration).multiply(hourlyRate.multiply(bonusRate));
+            }
+        }
 
         return new IncomeDTO(grossPay, shiftDTOs, nextShiftDTO, nextShiftDuration,
-                new BigDecimal(nextShiftDuration).multiply(jobHourlyRateMap.get(shiftDTOs.get(0).getJobId()).multiply(bonusRate)),
-                calculateTotalHours(shifts));
+                nextShiftPay, calculateTotalHours(shifts));
     }
 
     private List<Shift> getShifts(LocalDate fromDate, LocalDate endDate, int workerId, int jobId) {

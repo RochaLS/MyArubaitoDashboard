@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 public interface ShiftRepository extends JpaRepository<Shift, Integer> {
@@ -27,5 +28,9 @@ public interface ShiftRepository extends JpaRepository<Shift, Integer> {
     @Query(value = "SELECT * FROM shift WHERE  worker_id = ?1 AND (start_date >= ?2) ORDER BY start_date", nativeQuery = true)
     Page<Shift> findAllShiftsByWorkerFromSpecificDatePaginated(int workerId, LocalDate startDate, Pageable pageable);
 
+    @Query(value = "SELECT * FROM shift WHERE worker_id = ?1 AND " +
+            "CONCAT(start_date, ' ', start_time) > ?2 " +
+            "ORDER BY start_date, start_time LIMIT 1", nativeQuery = true)
+    Shift findNextShiftForWorker(int workerId, LocalDateTime now);
 
 }
