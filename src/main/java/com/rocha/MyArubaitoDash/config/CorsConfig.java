@@ -20,9 +20,9 @@ public class CorsConfig {
                 registry.addMapping("/**")
                         .allowedOrigins(allowedOrigins)
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                        .allowedHeaders("Origin", "Content-Type", "Accept", "Authorization", "Cache-Control", "Accept-Language", "User-Agent", "X-Requested-With") // Safari doesn't support wildcard rip :(
+                        .allowedHeaders("Origin", "Content-Type", "Accept", "Authorization", "Cache-Control", "Accept-Language", "User-Agent", "X-Requested-With"); // Safari doesn't support wildcard rip :(
 //                        .allowedHeaders("*")
-                        .allowCredentials(true);
+//                        .allowCredentials(true);
             }
         };
     }
