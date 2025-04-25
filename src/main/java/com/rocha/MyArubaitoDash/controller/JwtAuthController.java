@@ -73,9 +73,6 @@ public class JwtAuthController {
                 return ResponseEntity.status(404).body("Worker not found for the given username.");
             }
 
-            // Log worker details to check if everything is correct
-            System.out.println("Worker found: " + worker);
-
             // Generate token
             System.out.println("Generating JWT token...");
             final String token = jwtTokenUtil.generateToken(userDetails.getUsername(), worker.getId());
