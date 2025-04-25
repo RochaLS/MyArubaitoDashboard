@@ -12,7 +12,7 @@ import java.security.NoSuchAlgorithmException;
 
 
 @RestController
-@RequestMapping("/password-reset")
+@RequestMapping("api/password-reset")
 public class PasswordResetController {
 
     @Value("${RESET_PASSWORD_URL}")
