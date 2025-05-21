@@ -39,9 +39,6 @@ public class JwtAuthController {
     @PostMapping("/login")
     public ResponseEntity<?> createAuthenticationToken(@RequestBody JwtRequest authenticationRequest) {
         try {
-            // Log the request data to see what is being received
-            System.out.println("Received login request: " + authenticationRequest);
-
             // Spring Security handles credential verification
             System.out.println("Attempting authentication for username: " + authenticationRequest.getUsername());
 
@@ -73,10 +70,9 @@ public class JwtAuthController {
                 return ResponseEntity.status(404).body("Worker not found for the given username.");
             }
 
-            // Generate token
-            System.out.println("Generating JWT token...");
+
             final String token = jwtTokenUtil.generateToken(userDetails.getUsername(), worker.getId());
-            System.out.println("JWT token generated: " + token);
+
 
             // Return the token in response
             return ResponseEntity.ok(new JwtResponse(token));
