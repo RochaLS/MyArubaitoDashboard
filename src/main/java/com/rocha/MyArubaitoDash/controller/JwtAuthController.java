@@ -5,7 +5,6 @@ import com.rocha.MyArubaitoDash.model.JwtRequest;
 import com.rocha.MyArubaitoDash.model.JwtResponse;
 import com.rocha.MyArubaitoDash.model.Worker;
 import com.rocha.MyArubaitoDash.repository.WorkerRepository;
-import com.rocha.MyArubaitoDash.service.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,20 +15,23 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
-
-import static org.apache.http.impl.auth.BasicScheme.authenticate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/mobile/auth")
 public class JwtAuthController {
 
-    final private JwtTokenUtil jwtTokenUtil;
-    final private AuthenticationManager authenticationManager;
-    final private UserDetailsService userDetailsService;
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthController.class);
+
+    private final JwtTokenUtil jwtTokenUtil;
+    private final AuthenticationManager authenticationManager;
+    private final UserDetailsService userDetailsService;
     private final WorkerRepository workerRepository;
 
     @Autowired
-    public JwtAuthController(JwtTokenUtil jwtTokenUtil, AuthenticationManager authenticationManager, UserDetailsService userDetailsService, WorkerRepository workerRepository) {
+    public JwtAuthController(JwtTokenUtil jwtTokenUtil, AuthenticationManager authenticationManager,
+                             UserDetailsService userDetailsService, WorkerRepository workerRepository) {
         this.jwtTokenUtil = jwtTokenUtil;
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
@@ -39,9 +41,10 @@ public class JwtAuthController {
     @PostMapping("/login")
     public ResponseEntity<?> createAuthenticationToken(@RequestBody JwtRequest authenticationRequest) {
         try {
-            // Spring Security handles credential verification
-            System.out.println("Attempting authentication for username: " + authenticationRequest.getUsername());
+            // Log attempt without sensitive data
+            logger.info("Attempting authentication for email: {}", authenticationRequest.getUsername());
 
+            // Authenticate user
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             authenticationRequest.getUsername(),
@@ -49,37 +52,28 @@ public class JwtAuthController {
                     )
             );
 
-            // Log if authentication was successful
-            System.out.println("Authentication successful for username: " + authenticationRequest.getUsername());
+            // Log success
+            logger.info("Authentication successful for email: {}", authenticationRequest.getUsername());
 
-            // If we get here, authentication was successful
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            System.out.println("Authentication context set for user: " + authenticationRequest.getUsername());
 
             // Get authenticated user details
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            System.out.println("Authenticated user details: " + userDetails.getUsername());
-
-            // Username is email, sorry I know it's weird
-            System.out.println("Searching worker by email: " + userDetails.getUsername());
             Worker worker = workerRepository.findWorkerByEmail(userDetails.getUsername());
 
             if (worker == null) {
-                // If worker is null, print this for debugging
-                System.out.println("No worker found with email: " + userDetails.getUsername());
+                logger.warn("No worker found with email: {}", userDetails.getUsername());
                 return ResponseEntity.status(404).body("Worker not found for the given username.");
             }
 
-
+            // Generate token
             final String token = jwtTokenUtil.generateToken(userDetails.getUsername(), worker.getId());
-
-
-            // Return the token in response
             return ResponseEntity.ok(new JwtResponse(token));
 
         } catch (AuthenticationException e) {
-            // Log the exception message
-            System.out.println("Authentication failed: " + e.getMessage());
+            // Log failure
+            logger.error("Authentication failed for username: {}. Reason: {}",
+                    authenticationRequest.getUsername(), e.getMessage());
             return ResponseEntity.status(401).body("Authentication failed: " + e.getMessage());
         }
     }
@@ -90,15 +84,18 @@ public class JwtAuthController {
             String token = authorization.substring(7);
             String email = jwtTokenUtil.extractEmail(token);
 
-            // Check if token is valid
             if (email != null && jwtTokenUtil.validateToken(token, email)) {
                 Worker worker = workerRepository.findWorkerByEmail(email);
                 final String newToken = jwtTokenUtil.generateToken(email, worker.getId());
+                logger.info("Token refreshed successfully for user: {}", email);
                 return ResponseEntity.ok(new JwtResponse(newToken));
             }
 
+            logger.warn("Invalid token provided for refresh.");
             return ResponseEntity.status(401).body("Invalid token");
+
         } catch (Exception e) {
+            logger.error("Token refresh failed. Reason: {}", e.getMessage());
             return ResponseEntity.status(401).body("Token refresh failed: " + e.getMessage());
         }
     }
@@ -109,17 +106,17 @@ public class JwtAuthController {
             String token = authorization.substring(7);
             String email = jwtTokenUtil.extractEmail(token);
 
-            // Check if token is valid
             if (email != null && jwtTokenUtil.validateToken(token, email)) {
+                logger.info("Token validation successful for user: {}", email);
                 return ResponseEntity.ok().body("Token is valid");
             }
 
+            logger.warn("Invalid token provided for validation.");
             return ResponseEntity.status(401).body("Invalid token");
+
         } catch (Exception e) {
-            return ResponseEntity.status(401).body("Token refresh failed: " + e.getMessage());
+            logger.error("Token validation failed. Reason: {}", e.getMessage());
+            return ResponseEntity.status(401).body("Token validation failed: " + e.getMessage());
         }
     }
-
-
-
 }

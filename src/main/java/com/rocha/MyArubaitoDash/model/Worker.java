@@ -44,6 +44,16 @@ public class Worker {
 //    @JsonIgnore
     private List<Job> jobs;
 
+    @Override
+    public String toString() {
+        return "Worker{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", email='" + email + '\'' +
+                ", password='[PROTECTED]'" +
+                '}';
+    }
+
 }
 
 

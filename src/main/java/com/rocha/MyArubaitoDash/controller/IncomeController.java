@@ -7,11 +7,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 //@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
 @RestController
 @RequestMapping("/api/income")
 public class IncomeController {
+
+    private static final Logger logger = LoggerFactory.getLogger(IncomeController.class);
 
     final private IncomeService incomeService;
 
@@ -21,42 +25,43 @@ public class IncomeController {
 
     @GetMapping("/{workerId}/{jobId}/calculate")
     public ResponseEntity<?> getIncomeData(@RequestParam("date") LocalDate date, @PathVariable int workerId, @PathVariable int jobId) {
+        logger.info("Request to calculate income for workerId: {}, jobId: {}, date: {}", workerId, jobId, date);
         IncomeDTO incomeData = incomeService.geIncomeDataFor(date, null, workerId, jobId);
+
         if (incomeData == null) {
+            logger.warn("Income data not found for workerId: {}, jobId: {}, date: {}", workerId, jobId, date);
             return new ResponseEntity<>("Data not found.", HttpStatus.NOT_FOUND);
         }
 
+        logger.info("Income data retrieved successfully for workerId: {}, jobId: {}, date: {}", workerId, jobId, date);
         return ResponseEntity.ok(incomeData);
     }
 
     @GetMapping("/{workerId}/calculate")
     public ResponseEntity<?> getAllIncomeData(@RequestParam("date") LocalDate date, @PathVariable int workerId) {
+        logger.info("Request to calculate all income data for workerId: {}, date: {}", workerId, date);
         IncomeDTO incomeData = incomeService.geIncomeDataFor(date, null, workerId, -1);
-        if (incomeData == null) {
 
-            System.out.println("Data not found");
+        if (incomeData == null) {
+            logger.warn("Income data not found for workerId: {}, date: {}", workerId, date);
             return new ResponseEntity<>("Data not found.", HttpStatus.NOT_FOUND);
         }
 
-        System.out.println("Data sent to client: " + incomeData);
-
+        logger.info("Income data sent to client for workerId: {}, date: {}", workerId, date);
         return ResponseEntity.ok(incomeData);
     }
 
     @GetMapping("/{workerId}/calculate-by-range")
     public ResponseEntity<?> getAllIncomeDataFromRange(@RequestParam("start-date") LocalDate startDate, @RequestParam("end-date") LocalDate endDate, @PathVariable int workerId) {
+        logger.info("Request to calculate income data for workerId: {} from start-date: {} to end-date: {}", workerId, startDate, endDate);
         IncomeDTO incomeData = incomeService.geIncomeDataFor(startDate, endDate, workerId, -1);
-        System.out.println("Searching for shifts from " + startDate + " to " + endDate);
+
         if (incomeData == null) {
+            logger.warn("Income data not found for workerId: {} in the date range: {} to {}", workerId, startDate, endDate);
             return new ResponseEntity<>("Data not found.", HttpStatus.NOT_FOUND);
         }
 
-        System.out.println("Data sent to client: " + incomeData);
-
+        logger.info("Income data sent to client for workerId: {}, from start-date: {} to end-date: {}", workerId, startDate, endDate);
         return ResponseEntity.ok(incomeData);
     }
-
-
-
-
 }

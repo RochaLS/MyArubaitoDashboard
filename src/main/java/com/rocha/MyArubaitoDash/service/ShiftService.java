@@ -61,15 +61,11 @@ public class ShiftService {
         try {
             shiftRepository.save(shift);
         } catch (Exception e) {
-            System.out.println("Unexpected Error");
             e.printStackTrace();
         }
     }
 
     public void updateShift(int id, ShiftDTO shiftDTO) {
-
-        System.out.println("UPDATING SHIFT:");
-        System.out.println(shiftDTO);
         try {
             Optional<Shift> optionalShift = shiftRepository.findById(id);
 
@@ -95,12 +91,9 @@ public class ShiftService {
                 shiftToBeUpdated.setMoneyValue(new BigDecimal(shiftDuration).multiply(job.getHourlyRate().multiply(bonusRate)));
                 shiftToBeUpdated.setEncryptedMoneyValue(encryptionService.encrypt(shiftToBeUpdated.getMoneyValue().toString()));
 
-                System.out.println(shiftToBeUpdated.getMoneyValue().toString());
-                System.out.println("WILL SAVE NOW ============================");
                 shiftRepository.save(shiftToBeUpdated);
             }
         } catch (Exception e) {
-            System.out.println("Unexpected Error");
             e.printStackTrace();
         }
     }
@@ -112,10 +105,8 @@ public class ShiftService {
                 Shift shiftToBeDeleted = shiftToBeDeletedFound.get();
                 shiftRepository.delete(shiftToBeDeleted);
 
-                System.out.println("Shift of id: " + shiftToBeDeleted.getId() + " deleted!");
             }
         } catch (Exception e) {
-            System.out.println("Error deleting shift.");
             e.printStackTrace();
         }
     }

@@ -11,7 +11,6 @@ public class SessionValidationController {
 
     @GetMapping("/validate-session")
     public ResponseEntity<?> validateSession(HttpSession session, @RequestParam String userId) {
-        System.out.println("IM HEREEEEEEEEEEEEE");
         String sessionUserId = (String) session.getAttribute("userId");
         if (sessionUserId != null && sessionUserId.equals(userId)) {
 
