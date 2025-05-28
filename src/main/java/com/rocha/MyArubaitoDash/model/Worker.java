@@ -7,6 +7,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.NonNull;
+
 import java.util.List;
 
 @Data
@@ -34,6 +36,8 @@ public class Worker {
 
     private String password;
     private String authority;
+
+    private String appleUserId;
 
 // If I were to implement eager loading in the future:
     @JsonIgnore

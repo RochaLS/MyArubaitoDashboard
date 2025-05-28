@@ -1,5 +1,8 @@
 package com.rocha.MyArubaitoDash.controller;
 
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.rocha.MyArubaitoDash.dto.AppleLoginRequest;
+import com.rocha.MyArubaitoDash.jwt.AppleIdTokenValidator;
 import com.rocha.MyArubaitoDash.jwt.JwtTokenUtil;
 import com.rocha.MyArubaitoDash.model.JwtRequest;
 import com.rocha.MyArubaitoDash.model.JwtResponse;
@@ -28,14 +31,16 @@ public class JwtAuthController {
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
     private final WorkerRepository workerRepository;
+    private final AppleIdTokenValidator appleIdTokenValidator;
 
     @Autowired
     public JwtAuthController(JwtTokenUtil jwtTokenUtil, AuthenticationManager authenticationManager,
-                             UserDetailsService userDetailsService, WorkerRepository workerRepository) {
+                             UserDetailsService userDetailsService, WorkerRepository workerRepository, AppleIdTokenValidator appleIdTokenValidator) {
         this.jwtTokenUtil = jwtTokenUtil;
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
         this.workerRepository = workerRepository;
+        this.appleIdTokenValidator = appleIdTokenValidator;
     }
 
     @PostMapping("/login")
@@ -117,6 +122,47 @@ public class JwtAuthController {
         } catch (Exception e) {
             logger.error("Token validation failed. Reason: {}", e.getMessage());
             return ResponseEntity.status(401).body("Token validation failed: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/apple-login")
+    public ResponseEntity<?> appleLogin(@RequestBody AppleLoginRequest appleLoginRequest) {
+        try {
+            logger.info("Attempting Apple login for clientId: {}", appleLoginRequest.getClientId());
+
+            // Validate the ID token using AppleIdTokenValidator
+            JWTClaimsSet claims = appleIdTokenValidator.validateIdToken(appleLoginRequest.getIdToken(), appleLoginRequest.getClientId());
+
+            // Extract user information
+            String appleUserId = claims.getSubject();
+            String email = claims.getStringClaim("email");
+
+            // Log successful validation
+            logger.info("Apple ID token successfully validated. UserId: {}, Email: {}", appleUserId, email);
+
+            // Check if the user exists in the database
+            Worker worker = workerRepository.findWorkerByEmail(email);
+
+            if (worker == null) {
+                // Register the user if they don't exist
+                logger.info("Worker not found, creating new worker with email: {}", email);
+                worker = new Worker();
+                worker.setEmail(email);
+                String nameFromEmail = email.split("@")[0];
+                worker.setName(nameFromEmail);
+                worker.setAppleUserId(appleUserId);
+                workerRepository.save(worker);
+            }
+
+            // Generate a JWT token for the user
+            String token = jwtTokenUtil.generateToken(worker.getEmail(), worker.getId());
+
+            logger.info("Generated JWT token for Apple user: {}", appleUserId);
+            return ResponseEntity.ok(new JwtResponse(token));
+
+        } catch (Exception e) {
+            logger.error("Apple login failed. Reason: {}", e.getMessage());
+            return ResponseEntity.status(401).body("Apple login failed: " + e.getMessage());
         }
     }
 }
