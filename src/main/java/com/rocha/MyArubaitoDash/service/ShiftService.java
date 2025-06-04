@@ -47,8 +47,9 @@ public class ShiftService {
         return shiftRepository.findAllByJobId(jobId);
     }
 
-    public ArrayList<Shift> getShiftsByWorkerId(int workerId) {
-        return  shiftRepository.findAllByWorkerId(workerId);
+    public List<Shift> getShiftsByWorkerId(int workerId) {
+        List<Shift> shifts = shiftRepository.findAllByWorkerId(workerId);
+        return  decryptShifts(shifts);
     }
 
     public Shift getShiftById(int id) {

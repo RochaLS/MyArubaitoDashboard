@@ -51,6 +51,7 @@ public class ShiftDTO {
 
     private int id;
 
+    @ToString.Exclude
     private BigDecimal moneyValue;
 
 }

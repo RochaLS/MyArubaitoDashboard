@@ -74,6 +74,9 @@ public class IncomeService {
 
     private List<Shift> getShifts(LocalDate fromDate, LocalDate endDate, int workerId, int jobId) {
         if (jobId == -1) {
+            if  (fromDate == null) {
+                return shiftService.getShiftsByWorkerId(workerId);
+            }
             return endDate == null
                     ? shiftService.getAllShiftsByWorkerFrom(fromDate, workerId)
                     : shiftService.getAllShiftsInRangeByWorker(workerId, fromDate, endDate);

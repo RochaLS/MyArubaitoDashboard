@@ -64,4 +64,18 @@ public class IncomeController {
         logger.info("Income data sent to client for workerId: {}, from start-date: {} to end-date: {}", workerId, startDate, endDate);
         return ResponseEntity.ok(incomeData);
     }
+
+    @GetMapping("/{workerId}/calculate-all")
+    public ResponseEntity<?> getAllIncomeDataFromAllTime(@PathVariable int workerId) {
+        logger.info("Request to calculate income data for workerId: {}", workerId);
+        IncomeDTO incomeData = incomeService.geIncomeDataFor(null, null, workerId, -1);
+
+        if (incomeData == null) {
+            logger.warn("Income data not found for workerId: {}", workerId);
+            return new ResponseEntity<>("Data not found.", HttpStatus.NOT_FOUND);
+        }
+
+        logger.info("Income data sent to client for workerId: {}", workerId);
+        return ResponseEntity.ok(incomeData);
+    }
 }

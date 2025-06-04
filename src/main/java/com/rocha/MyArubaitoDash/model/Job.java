@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -21,12 +22,14 @@ public class Job {
     private int id;
 
     @Transient // Not mapped to db
+    @ToString.Exclude
     private String title;
 
     @JsonIgnore
     private String encryptedTitle;
 
     @Transient // Not mapped to db
+    @ToString.Exclude
     private BigDecimal hourlyRate;
 
     @JsonIgnore
