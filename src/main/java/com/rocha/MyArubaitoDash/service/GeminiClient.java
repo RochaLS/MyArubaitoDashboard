@@ -19,7 +19,7 @@ import java.util.Base64;
 public class GeminiClient {
 
     private final RestTemplate restTemplate;
-    private final String geminiApiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+    private final String geminiApiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
     @Value("${GEMINI_API_KEY}")
     private String apiKey;
