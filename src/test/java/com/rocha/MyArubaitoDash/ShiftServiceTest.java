@@ -1,5 +1,8 @@
 package com.rocha.MyArubaitoDash;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rocha.MyArubaitoDash.dto.ShiftDTO;
 import com.rocha.MyArubaitoDash.model.Job;
 import com.rocha.MyArubaitoDash.model.Shift;
@@ -163,6 +166,30 @@ public class ShiftServiceTest {
 //        assertFalse(foundShifts.isEmpty());
 //        verify(shiftRepository, times(1)).findAllByWorkerId(1);
 //    }
+
+    @Test
+    public void testShiftDTODeserializationWithProblematicCharacters() throws Exception {
+        String problematicJson = """
+        [{
+            "worker_id": 16,
+            "job_id": 1,
+            "startDate": "2025-07-20",
+            "startTime": "10:00:00?AM",
+            "endDate": "2025-07-20",
+            "endTime": "16:30:00?PM",
+            "shiftType": "Not Specified",
+            "isHoliday": false,
+            "id": 123
+        }]
+        """;
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        // This should throw the same error you're seeing
+        assertThrows(JsonProcessingException.class, () -> {
+            mapper.readValue(problematicJson, new TypeReference<ArrayList<ShiftDTO>>() {});
+        });
+    }
 
 
 }

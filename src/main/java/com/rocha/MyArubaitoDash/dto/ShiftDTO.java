@@ -3,6 +3,8 @@ package com.rocha.MyArubaitoDash.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.rocha.MyArubaitoDash.util.SafeLocalTimeDeserializer;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -37,12 +39,15 @@ public class ShiftDTO {
     private LocalDate startDate;
 
     @NotNull
+    @JsonDeserialize(using = SafeLocalTimeDeserializer.class)
     private LocalTime startTime;
 
     @NotNull
+
     private LocalDate endDate;
 
     @NotNull
+    @JsonDeserialize(using = SafeLocalTimeDeserializer.class)
     private LocalTime endTime;
 
     private String shiftType;
