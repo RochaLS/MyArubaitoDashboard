@@ -1,7 +1,11 @@
 package com.rocha.MyArubaitoDash.service;
 
 import com.rocha.MyArubaitoDash.model.Worker;
+import com.rocha.MyArubaitoDash.repository.AIUsageRepository;
+import com.rocha.MyArubaitoDash.repository.JobRepository;
+import com.rocha.MyArubaitoDash.repository.ShiftRepository;
 import com.rocha.MyArubaitoDash.repository.WorkerRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -12,15 +16,21 @@ import java.util.Optional;
 public class WorkerService {
 
     private final WorkerRepository workerRepository;
+    private final AIUsageRepository aiUsageRepository;
+    private final JobRepository jobRepository;
     private final EncryptionService encryptionService;
 
     private final PasswordEncoder passwordEncoder;
+    private final ShiftRepository shiftRepository;
 
     @Autowired
-    public WorkerService(WorkerRepository workerRepository, EncryptionService encryptionService, PasswordEncoder passwordEncoder) {
+    public WorkerService(WorkerRepository workerRepository, EncryptionService encryptionService, PasswordEncoder passwordEncoder, ShiftRepository shiftRepository, JobRepository jobRepository, AIUsageRepository aiUsageRepository) {
         this.workerRepository = workerRepository;
         this.encryptionService = encryptionService;
         this.passwordEncoder = passwordEncoder;
+        this.shiftRepository = shiftRepository;
+        this.jobRepository = jobRepository;
+        this.aiUsageRepository = aiUsageRepository;
     }
 
     public Worker getWorkerById(int id) {
@@ -90,12 +100,13 @@ public class WorkerService {
         }
     }
 
+    @Transactional
     public void deleteWorker(int id) {
         try {
             Optional<Worker> workerToBeDeletedFound = workerRepository.findById(id);
             if (workerToBeDeletedFound.isPresent()) {
                 Worker workerToBeDeleted = workerToBeDeletedFound.get();
-                workerRepository.delete(workerToBeDeleted);
+                deleteAllWorkerData(workerToBeDeleted.getId());
                 System.out.println("Worker with id: " + workerToBeDeleted.getId() + " successfully deleted.");
             }
 
@@ -103,6 +114,14 @@ public class WorkerService {
             System.out.println("Unexpected Error deleting worker with id: " + id);
             e.printStackTrace();
         }
+    }
+
+
+    public void deleteAllWorkerData(int workerId) {
+        aiUsageRepository.deleteAllByWorkerId(workerId);
+        shiftRepository.deleteAllByWorkerId(workerId);
+        jobRepository.deleteAllByWorkerId(workerId);
+        workerRepository.deleteById(workerId);
     }
 
 }

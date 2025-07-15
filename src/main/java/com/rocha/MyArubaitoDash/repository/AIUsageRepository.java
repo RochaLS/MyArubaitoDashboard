@@ -8,4 +8,5 @@ import java.util.Optional;
 
 public interface AIUsageRepository extends JpaRepository<AIUsage, Integer> {
     Optional<AIUsage> findByWorker(Worker worker);
+    void deleteAllByWorkerId(Integer workerId);
 }
