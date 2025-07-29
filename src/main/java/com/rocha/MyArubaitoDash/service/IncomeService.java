@@ -1,9 +1,12 @@
 package com.rocha.MyArubaitoDash.service;
 
+import com.rocha.MyArubaitoDash.controller.IncomeController;
 import com.rocha.MyArubaitoDash.dto.IncomeDTO;
 import com.rocha.MyArubaitoDash.dto.ShiftDTO;
 import com.rocha.MyArubaitoDash.model.Job;
 import com.rocha.MyArubaitoDash.model.Shift;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -20,13 +23,17 @@ public class IncomeService {
 
     final private ShiftService shiftService;
     final private JobService jobService;
+    final private  WorkerSettingsService workerSettingsService;
+    private static final Logger logger = LoggerFactory.getLogger(IncomeService.class);
 
-    public IncomeService(ShiftService shiftService, JobService jobService) {
+    public IncomeService(ShiftService shiftService, JobService jobService, WorkerSettingsService workerSettingsService) {
         this.shiftService = shiftService;
         this.jobService = jobService;
+        this.workerSettingsService = workerSettingsService;
     }
 
     public IncomeDTO geIncomeDataFor(LocalDate fromDate, LocalDate endDate, int workerId, int jobId) {
+        BigDecimal holidayMultiplier = workerSettingsService.getSettingsByWorkerId(workerId).getPayMultiplier();
         List<Shift> shifts = getShifts(fromDate, endDate, workerId, jobId);
         if (shifts.isEmpty()) {
             return null;
@@ -34,7 +41,8 @@ public class IncomeService {
 
         HashMap<Integer, BigDecimal> jobHourlyRateMap = createJobHourlyRateMap(shifts);
         List<ShiftDTO> shiftDTOs = createShiftDTOs(shifts, workerId);
-        BigDecimal grossPay = calculateGrossPay(shifts, jobHourlyRateMap);
+        logger.info(shiftDTOs.toString());
+        BigDecimal grossPay = calculateGrossPay(shifts, jobHourlyRateMap, holidayMultiplier);
 
         // Get the next shift regardless of the date range
         Shift nextShift = shiftService.getNextShiftForWorker(workerId);
@@ -63,7 +71,7 @@ public class IncomeService {
                 }
 
                 // Calculate bonus
-                BigDecimal bonusRate = nextShiftDTO.getIsHoliday() ? BigDecimal.valueOf(1.5) : BigDecimal.ONE;
+                BigDecimal bonusRate = nextShiftDTO.getIsHoliday() ? holidayMultiplier : BigDecimal.ONE;
                 nextShiftPay = new BigDecimal(nextShiftDuration).multiply(hourlyRate.multiply(bonusRate));
             }
         }
@@ -95,7 +103,14 @@ public class IncomeService {
 
     private List<ShiftDTO> createShiftDTOs(List<Shift> shifts, int workerId) {
         List<ShiftDTO> shiftDTOs = new ArrayList<>();
+        BigDecimal holidayMultiplier = workerSettingsService.getSettingsByWorkerId(workerId).getPayMultiplier();
+
         for (Shift shift : shifts) {
+            BigDecimal duration = BigDecimal.valueOf(calculateShiftDuration(shift));
+            BigDecimal hourlyRate = jobService.getJobById(shift.getJob().getId()).getHourlyRate();
+            BigDecimal multiplier = shift.getIsHoliday() ? holidayMultiplier : BigDecimal.ONE;
+            BigDecimal moneyValue = duration.multiply(hourlyRate).multiply(multiplier);
+
             shiftDTOs.add(new ShiftDTO(
                     workerId,
                     shift.getJob().getId(),
@@ -106,19 +121,22 @@ public class IncomeService {
                     shift.getShiftType(),
                     shift.getIsHoliday(),
                     shift.getId(),
-                    shift.getMoneyValue()
+                    moneyValue
             ));
         }
+
         return shiftDTOs;
     }
 
-    private BigDecimal calculateGrossPay(List<Shift> shifts, HashMap<Integer, BigDecimal> jobHourlyRateMap) {
+    private BigDecimal calculateGrossPay(List<Shift> shifts, HashMap<Integer, BigDecimal> jobHourlyRateMap, BigDecimal holidayMultiplier) {
         BigDecimal grossPay = BigDecimal.ZERO;
         for (Shift shift : shifts) {
-            BigDecimal bonusRate = shift.getIsHoliday() ? BigDecimal.valueOf(1.5) : BigDecimal.ONE;
+            BigDecimal bonusRate = shift.getIsHoliday() ? holidayMultiplier : BigDecimal.ONE;
             BigDecimal jobHourlyRate = jobHourlyRateMap.get(shift.getJob().getId());
             grossPay = grossPay.add(new BigDecimal(calculateShiftDuration(shift)).multiply(jobHourlyRate.multiply(bonusRate)));
         }
+
+
         return grossPay;
     }
 

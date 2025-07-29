@@ -29,9 +29,11 @@ public class Shift {
 
     @Transient
     @ToString.Exclude
+    @Deprecated
     private BigDecimal moneyValue;
 
     @JsonIgnore
+    @Deprecated
     private String encryptedMoneyValue;
 
     // If I were to implement eager loading in the future:
