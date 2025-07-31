@@ -28,4 +28,6 @@ public class JobDTO {
     @JsonProperty("worker_id")
     @NotNull
     private Integer workerId; // was int previously had to use the wrapper to apply validation
+
+    private String colorHex;
 }

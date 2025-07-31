@@ -61,6 +61,7 @@ public class JobController {
             job.setTitle(jobDTO.getTitle());
             job.setHourlyRate(jobDTO.getHourlyRate());
             job.setWorker(worker);
+            job.setColorHex(jobDTO.getColorHex());
 
             jobService.addJob(job);
             logger.info("Job added successfully for Worker ID: {}", jobDTO.getWorkerId());

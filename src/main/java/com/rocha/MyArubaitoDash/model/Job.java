@@ -46,6 +46,9 @@ public class Job {
     @JsonIgnore
     private Worker worker;
 
+    @Column(name = "color_hex")
+    private String colorHex;
+
 }
 
 
