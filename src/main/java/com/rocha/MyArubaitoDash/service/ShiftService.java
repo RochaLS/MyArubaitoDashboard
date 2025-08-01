@@ -7,6 +7,7 @@ import com.rocha.MyArubaitoDash.model.Worker;
 import com.rocha.MyArubaitoDash.repository.JobRepository;
 import com.rocha.MyArubaitoDash.repository.ShiftRepository;
 import com.rocha.MyArubaitoDash.repository.WorkerRepository;
+import com.rocha.MyArubaitoDash.util.OwnershipVerifier;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cglib.core.Local;
@@ -14,6 +15,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -28,180 +31,151 @@ import java.util.Optional;
 public class ShiftService {
 
     private final ShiftRepository shiftRepository;
-    private final WorkerRepository workerRepository;
-    private final JobRepository jobRepository;
     private final JobService jobService;
     private final EncryptionService encryptionService;
+    private final OwnershipVerifier ownershipVerifier;
 
     @Autowired
-    public ShiftService(ShiftRepository shiftRepository, WorkerRepository workerRepository, JobRepository jobRepository, JobService jobService, EncryptionService encryptionService) {
+    public ShiftService(
+            ShiftRepository shiftRepository,
+            JobService jobService,
+            EncryptionService encryptionService,
+            OwnershipVerifier ownershipVerifier
+    ) {
         this.shiftRepository = shiftRepository;
-        this.workerRepository = workerRepository;
-        this.jobRepository = jobRepository;
         this.jobService = jobService;
         this.encryptionService = encryptionService;
+        this.ownershipVerifier = ownershipVerifier;
     }
 
-
     public ArrayList<Shift> getShiftsByJobId(int jobId) {
+        Job job = jobService.getJobById(jobId);
+        ownershipVerifier.checkJobOwnership(job);
         return shiftRepository.findAllByJobId(jobId);
     }
 
     public List<Shift> getShiftsByWorkerId(int workerId) {
-        List<Shift> shifts = shiftRepository.findAllByWorkerId(workerId);
-        return  decryptShifts(shifts);
+        ownershipVerifier.checkWorkerIdOwnership(workerId);
+        return decryptShifts(shiftRepository.findAllByWorkerId(workerId));
     }
 
     public Shift getShiftById(int id) {
-        Optional<Shift> shift = shiftRepository.findById(id);
-
-        return shift.orElse(null);
+        Shift shift = shiftRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Shift not found"));
+        ownershipVerifier.checkShiftOwnership(shift);
+        return decryptShifts(List.of(shift)).get(0);
     }
 
-    public void addShift(Shift shift) {
-        try {
-            shiftRepository.save(shift);
-        } catch (Exception e) {
-            e.printStackTrace();
+    public void createShift(ShiftDTO shiftDTO) {
+        Worker currentWorker = ownershipVerifier.getCurrentWorker();
+        ownershipVerifier.checkWorkerIdOwnership(shiftDTO.getWorkerId());
+
+        Job job = jobService.getJobById(shiftDTO.getJobId());
+        ownershipVerifier.checkJobOwnership(job);
+
+        Shift shift = convertDTOToEntity(shiftDTO);
+        shift.setWorker(currentWorker);
+        shift.setJob(job);
+        calculateAndSetMoney(shift, job);
+
+        if (shift.getIsHoliday() == null) {
+            shift.setIsHoliday(false);
         }
+
+        shiftRepository.save(shift);
     }
 
     public void updateShift(int id, ShiftDTO shiftDTO) {
-        try {
-            Optional<Shift> optionalShift = shiftRepository.findById(id);
+        Shift shift = shiftRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Shift not found"));
+        ownershipVerifier.checkShiftOwnership(shift);
 
-            if (optionalShift.isPresent()) {
-                Shift shiftToBeUpdated = optionalShift.get();
-                shiftToBeUpdated.setStartTime(shiftDTO.getStartTime());
-                shiftToBeUpdated.setEndTime(shiftDTO.getEndTime());
-                shiftToBeUpdated.setStartDate(shiftDTO.getStartDate());
-                shiftToBeUpdated.setEndDate(shiftDTO.getEndDate());
-                shiftToBeUpdated.setShiftType(shiftDTO.getShiftType());
-                shiftToBeUpdated.setIsHoliday(shiftDTO.getIsHoliday());
+        Job job = jobService.getJobById(shiftDTO.getJobId());
+        ownershipVerifier.checkJobOwnership(job);
 
-                Job job = jobService.getJobById(shiftDTO.getJobId());
+        shift.setStartTime(shiftDTO.getStartTime());
+        shift.setEndTime(shiftDTO.getEndTime());
+        shift.setStartDate(shiftDTO.getStartDate());
+        shift.setEndDate(shiftDTO.getEndDate());
+        shift.setShiftType(shiftDTO.getShiftType());
+        shift.setIsHoliday(shiftDTO.getIsHoliday());
+        shift.setJob(job);
 
-                if (job == null) {
-                    throw new EntityNotFoundException("Job not found."); // NOT WORKING CHECK LATER
-                }
-
-                shiftToBeUpdated.setJob(job);
-
-                float shiftDuration = calculateShiftDuration(shiftToBeUpdated);
-                BigDecimal bonusRate = shiftToBeUpdated.getIsHoliday() ? BigDecimal.valueOf(1.5) : BigDecimal.ONE;
-                shiftToBeUpdated.setMoneyValue(new BigDecimal(shiftDuration).multiply(job.getHourlyRate().multiply(bonusRate)));
-                shiftToBeUpdated.setEncryptedMoneyValue(encryptionService.encrypt(shiftToBeUpdated.getMoneyValue().toString()));
-
-                shiftRepository.save(shiftToBeUpdated);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        calculateAndSetMoney(shift, job);
+        shiftRepository.save(shift);
     }
 
     public void deleteShift(int id) {
-        try {
-            Optional<Shift> shiftToBeDeletedFound = shiftRepository.findById(id);
-            if (shiftToBeDeletedFound.isPresent()) {
-                Shift shiftToBeDeleted = shiftToBeDeletedFound.get();
-                shiftRepository.delete(shiftToBeDeleted);
-
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void createShift(ShiftDTO shiftDTO) throws EntityNotFoundException{
-       try {
-           Worker worker = workerRepository.findById(shiftDTO.getWorkerId()).orElse(null);
-           Job job = jobService.getJobById(shiftDTO.getJobId());
-
-           if (worker == null || job == null) {
-               throw new EntityNotFoundException("Worker or job not found."); // NOT WORKING CHECK LATER
-           }
-           Shift shiftToAdd =  convertDTOToEntity(shiftDTO);
-           shiftToAdd.setWorker(worker);
-           // Calculating money value for the shift
-           float shiftDuration = calculateShiftDuration(shiftToAdd);
-           BigDecimal bonusRate = shiftToAdd.getIsHoliday() ? BigDecimal.valueOf(1.5) : BigDecimal.ONE;
-           shiftToAdd.setMoneyValue(new BigDecimal(shiftDuration).multiply(job.getHourlyRate().multiply(bonusRate)));
-           shiftToAdd.setEncryptedMoneyValue(encryptionService.encrypt(shiftToAdd.getMoneyValue().toString()));
-           shiftToAdd.setJob(job);
-           if (shiftToAdd.getIsHoliday() == null) {
-               shiftToAdd.setIsHoliday(false);
-           }
-           shiftRepository.save(shiftToAdd);
-       } catch (EntityNotFoundException e) {
-           throw  e;
-       }
-       catch (Exception e) {
-           System.out.println(e.getMessage());
-       }
-    }
-
-    private float calculateShiftDuration(Shift shift) {
-        if (shift == null) {
-            return 0;
-        }
-        long minutesDifference = ChronoUnit.MINUTES.between(shift.getStartTime(), shift.getEndTime());
-        float shiftDuration = minutesDifference / 60.0f;
-        return shiftDuration >= 5 ? shiftDuration - 0.5f : shiftDuration; // - 30min break
-    }
-
-    private Shift convertDTOToEntity(ShiftDTO shiftDTO) {
-        // Retrieve Worker and Job from the passed Shift object
-//        Worker worker = workerRepository.findById(shiftDTO.getWorkerId()).orElse(null);
-//        Job job = jobRepository.findById(shiftDTO.getJobId()).orElse(null);
-        Shift shift = new Shift();
-//        shift.setWorker(worker);
-//        shift.setJob(job);
-        shift.setStartDate(shiftDTO.getStartDate());
-        shift.setStartTime(shiftDTO.getStartTime());
-        shift.setEndDate(shiftDTO.getEndDate());
-        shift.setEndTime(shiftDTO.getEndTime());
-        shift.setShiftType(shiftDTO.getShiftType());
-        shift.setIsHoliday(shiftDTO.getIsHoliday());
-
-        return shift;
+        Shift shift = shiftRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Shift not found"));
+        ownershipVerifier.checkShiftOwnership(shift);
+        shiftRepository.delete(shift);
     }
 
     public List<Shift> getShiftsFrom(LocalDate date, int workerId, int jobId) {
-        List<Shift> shifts = shiftRepository.findShiftsFromSpecificDate(jobId, workerId, date);
-        return decryptShifts(shifts);
+        ownershipVerifier.checkWorkerIdOwnership(workerId);
+        Job job = jobService.getJobById(jobId);
+        ownershipVerifier.checkJobOwnership(job);
+
+        return decryptShifts(shiftRepository.findShiftsFromSpecificDate(jobId, workerId, date));
     }
 
     public List<Shift> getAllShiftsByWorkerFrom(LocalDate date, int workerId) {
-        List<Shift> shifts = shiftRepository.findAllShiftsByWorkerFromSpecificDate(workerId, date);
-        return decryptShifts(shifts);
+        ownershipVerifier.checkWorkerIdOwnership(workerId);
+        return decryptShifts(shiftRepository.findAllShiftsByWorkerFromSpecificDate(workerId, date));
     }
 
     public List<Shift> getAllShiftsInRangeByWorker(int workerId, LocalDate startDate, LocalDate endDate) {
-        List<Shift> shifts = shiftRepository.findShiftsInRange(workerId, startDate, endDate);
-        return decryptShifts(shifts);
+        ownershipVerifier.checkWorkerIdOwnership(workerId);
+        return decryptShifts(shiftRepository.findShiftsInRange(workerId, startDate, endDate));
     }
 
     public Page<Shift> getAllShiftsByWorkerFromPaginated(LocalDate date, int workerId, int page, int size) {
+        ownershipVerifier.checkWorkerIdOwnership(workerId);
         Pageable pageable = PageRequest.of(page, size);
         Page<Shift> shiftPage = shiftRepository.findAllShiftsByWorkerFromSpecificDatePaginated(workerId, date, pageable);
 
-        List<Shift> decryptedShifts = decryptShifts(shiftPage.getContent());
-        return new PageImpl<>(decryptedShifts, pageable, shiftPage.getTotalElements());
+        List<Shift> decrypted = decryptShifts(shiftPage.getContent());
+        return new PageImpl<>(decrypted, pageable, shiftPage.getTotalElements());
     }
 
     public Shift getNextShiftForWorker(int workerId) {
-        LocalDateTime now = LocalDateTime.now();
-        return shiftRepository.findNextShiftForWorker(workerId, now);
+        ownershipVerifier.checkWorkerIdOwnership(workerId);
+        return shiftRepository.findNextShiftForWorker(workerId, LocalDateTime.now());
+    }
+
+    private void calculateAndSetMoney(Shift shift, Job job) {
+        float duration = calculateShiftDuration(shift);
+        BigDecimal bonus = shift.getIsHoliday() ? BigDecimal.valueOf(1.5) : BigDecimal.ONE;
+        BigDecimal value = new BigDecimal(duration).multiply(job.getHourlyRate().multiply(bonus));
+        shift.setMoneyValue(value);
+        shift.setEncryptedMoneyValue(encryptionService.encrypt(value.toString()));
+    }
+
+    private float calculateShiftDuration(Shift shift) {
+        long minutes = ChronoUnit.MINUTES.between(shift.getStartTime(), shift.getEndTime());
+        float hours = minutes / 60.0f;
+        return hours >= 5 ? hours - 0.5f : hours; // Apply break if >= 5 hrs
+    }
+
+    private Shift convertDTOToEntity(ShiftDTO dto) {
+        Shift shift = new Shift();
+        shift.setStartDate(dto.getStartDate());
+        shift.setEndDate(dto.getEndDate());
+        shift.setStartTime(dto.getStartTime());
+        shift.setEndTime(dto.getEndTime());
+        shift.setShiftType(dto.getShiftType());
+        shift.setIsHoliday(dto.getIsHoliday());
+        return shift;
     }
 
     private List<Shift> decryptShifts(List<Shift> shifts) {
         for (Shift shift : shifts) {
             if (shift.getEncryptedMoneyValue() != null) {
-                String decryptedValue = encryptionService.decrypt(shift.getEncryptedMoneyValue());
-                shift.setMoneyValue(new BigDecimal(decryptedValue));
+                String decrypted = encryptionService.decrypt(shift.getEncryptedMoneyValue());
+                shift.setMoneyValue(new BigDecimal(decrypted));
             }
         }
         return shifts;
     }
-
 }

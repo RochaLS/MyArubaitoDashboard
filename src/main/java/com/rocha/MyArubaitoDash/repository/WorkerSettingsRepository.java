@@ -8,4 +8,5 @@ import java.util.Optional;
 public interface WorkerSettingsRepository extends JpaRepository<WorkerSettings, Integer> {
 
     Optional<WorkerSettings> findWorkerSettingsByWorkerId(int workerId);
+    void deleteAllByWorkerId(Integer workerId);
 }

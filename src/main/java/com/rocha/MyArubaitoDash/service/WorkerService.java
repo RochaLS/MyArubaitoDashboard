@@ -1,10 +1,9 @@
 package com.rocha.MyArubaitoDash.service;
 
 import com.rocha.MyArubaitoDash.model.Worker;
-import com.rocha.MyArubaitoDash.repository.AIUsageRepository;
-import com.rocha.MyArubaitoDash.repository.JobRepository;
-import com.rocha.MyArubaitoDash.repository.ShiftRepository;
-import com.rocha.MyArubaitoDash.repository.WorkerRepository;
+import com.rocha.MyArubaitoDash.repository.*;
+import com.rocha.MyArubaitoDash.util.OwnershipVerifier;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,109 +18,113 @@ public class WorkerService {
     private final AIUsageRepository aiUsageRepository;
     private final JobRepository jobRepository;
     private final EncryptionService encryptionService;
-
     private final PasswordEncoder passwordEncoder;
     private final ShiftRepository shiftRepository;
+    private final OwnershipVerifier ownershipVerifier;
+    private final WorkerSettingsRepository workerSettingsRepository;
 
     @Autowired
-    public WorkerService(WorkerRepository workerRepository, EncryptionService encryptionService, PasswordEncoder passwordEncoder, ShiftRepository shiftRepository, JobRepository jobRepository, AIUsageRepository aiUsageRepository) {
+    public WorkerService(
+            WorkerRepository workerRepository,
+            EncryptionService encryptionService,
+            PasswordEncoder passwordEncoder,
+            ShiftRepository shiftRepository,
+            JobRepository jobRepository,
+            AIUsageRepository aiUsageRepository,
+            OwnershipVerifier ownershipVerifier,
+            WorkerSettingsRepository workerSettingsRepository
+    ) {
         this.workerRepository = workerRepository;
         this.encryptionService = encryptionService;
         this.passwordEncoder = passwordEncoder;
         this.shiftRepository = shiftRepository;
         this.jobRepository = jobRepository;
         this.aiUsageRepository = aiUsageRepository;
+        this.ownershipVerifier = ownershipVerifier;
+        this.workerSettingsRepository = workerSettingsRepository;
     }
 
     public Worker getWorkerById(int id) {
-        Optional<Worker> worker = workerRepository.findById(id);
-        if (worker.isPresent()) {
-            Worker workerFound = worker.get();
-            if (workerFound.getEncryptedLocation() != null) {
-                workerFound.setLocation(encryptionService.decrypt(workerFound.getEncryptedLocation()));
-            }
+        ownershipVerifier.checkWorkerIdOwnership(id);
 
-            return workerFound;
+        Worker worker = workerRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Worker not found"));
+
+        if (worker.getEncryptedLocation() != null) {
+            worker.setLocation(encryptionService.decrypt(worker.getEncryptedLocation()));
         }
 
-        return null;
+        return worker;
     }
 
     public boolean checkWorkerByEmail(String email) {
-        Worker worker = workerRepository.findWorkerByEmail(email);
-
-        return worker != null;
+        return workerRepository.findWorkerByEmail(email) != null;
     }
 
     public Worker getWorkerByEmail(String email) {
         return workerRepository.findWorkerByEmail(email);
     }
 
-
     public void addWorker(Worker worker) {
         try {
             if (worker.getLocation() != null) {
                 worker.setEncryptedLocation(encryptionService.encrypt(worker.getLocation()));
-            } else {
-                worker.setEncryptedLocation(null);
             }
+
             String hashedPassword = passwordEncoder.encode(worker.getPassword());
-            System.out.println("Hashed pass: " + hashedPassword);
             worker.setPassword(hashedPassword);
+
             workerRepository.save(worker);
             System.out.println("Worker with id: " + worker.getId() + " successfully added.");
         } catch (Exception e) {
-            System.out.println("Unexpected Error saving worker");
+            System.out.println("Unexpected error saving worker");
             e.printStackTrace();
         }
     }
 
     public void updateWorker(int id, Worker updatedWorker) {
+        ownershipVerifier.checkWorkerIdOwnership(id);
+
         try {
-            Optional<Worker> workerToBeUpdated = workerRepository.findById(id);
-            if (workerToBeUpdated.isPresent()) {
-                Worker worker = workerToBeUpdated.get();
-                updatedWorker.setEncryptedLocation(encryptionService.encrypt(updatedWorker.getLocation()));
-                updatedWorker.setId(worker.getId());
-                updatedWorker.setPassword(worker.getPassword()); // Temporary solution
+            Worker worker = workerRepository.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Worker not found"));
 
+            updatedWorker.setId(worker.getId());
+            updatedWorker.setEncryptedLocation(encryptionService.encrypt(updatedWorker.getLocation()));
+            updatedWorker.setPassword(worker.getPassword()); // preserve existing password
 
-                workerRepository.save(updatedWorker);
-                System.out.println("Worker with id: " + id + " successfully updated.");
-
-            }
-
-
+            workerRepository.save(updatedWorker);
+            System.out.println("Worker with id: " + id + " successfully updated.");
 
         } catch (Exception e) {
-            System.out.println("Unexpected Error updating worker with id: " + id);
+            System.out.println("Unexpected error updating worker with id: " + id);
             e.printStackTrace();
-
         }
     }
 
     @Transactional
     public void deleteWorker(int id) {
-        try {
-            Optional<Worker> workerToBeDeletedFound = workerRepository.findById(id);
-            if (workerToBeDeletedFound.isPresent()) {
-                Worker workerToBeDeleted = workerToBeDeletedFound.get();
-                deleteAllWorkerData(workerToBeDeleted.getId());
-                System.out.println("Worker with id: " + workerToBeDeleted.getId() + " successfully deleted.");
-            }
+        ownershipVerifier.checkWorkerIdOwnership(id);
 
+        try {
+            Worker worker = workerRepository.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Worker not found"));
+
+            deleteAllWorkerData(worker.getId());
+            System.out.println("Worker with id: " + id + " successfully deleted.");
         } catch (Exception e) {
-            System.out.println("Unexpected Error deleting worker with id: " + id);
+            System.out.println("Unexpected error deleting worker with id: " + id);
             e.printStackTrace();
         }
     }
 
-
     public void deleteAllWorkerData(int workerId) {
+        ownershipVerifier.checkWorkerIdOwnership(workerId);
+
         aiUsageRepository.deleteAllByWorkerId(workerId);
         shiftRepository.deleteAllByWorkerId(workerId);
         jobRepository.deleteAllByWorkerId(workerId);
+        workerSettingsRepository.deleteAllByWorkerId(workerId);
         workerRepository.deleteById(workerId);
     }
-
 }
