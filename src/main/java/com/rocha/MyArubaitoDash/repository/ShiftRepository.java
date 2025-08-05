@@ -5,10 +5,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 public interface ShiftRepository extends JpaRepository<Shift, Integer> {
     ArrayList<Shift> findAllByWorkerId(int workerId);
@@ -33,5 +35,10 @@ public interface ShiftRepository extends JpaRepository<Shift, Integer> {
             "CONCAT(start_date, ' ', start_time) > ?2 " +
             "ORDER BY start_date, start_time LIMIT 1", nativeQuery = true)
     Shift findNextShiftForWorker(int workerId, LocalDateTime now);
+
+    @Query("SELECT s FROM Shift s JOIN FETCH s.job WHERE s.worker.id = :workerId AND s.startDate >= :fromDate AND s.endDate <= :toDate")
+    List<Shift> getAllShiftsInRangeWithJob(@Param("workerId") int workerId,
+                                           @Param("fromDate") LocalDate fromDate,
+                                           @Param("toDate") LocalDate toDate);
 
 }

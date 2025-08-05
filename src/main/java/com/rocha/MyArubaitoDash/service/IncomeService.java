@@ -18,6 +18,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -42,7 +44,6 @@ public class IncomeService {
     }
 
     public IncomeDTO geIncomeDataFor(LocalDate fromDate, LocalDate endDate, int workerId, int jobId) {
-        // 🔐 Check worker ownership
         ownershipVerifier.checkWorkerIdOwnership(workerId);
 
         if (jobId != -1) {
@@ -53,48 +54,74 @@ public class IncomeService {
         }
 
         BigDecimal holidayMultiplier = workerSettingsService.getSettingsByWorkerId(workerId).getPayMultiplier();
-        List<Shift> shifts = getShifts(fromDate, endDate, workerId, jobId);
 
-        if (shifts.isEmpty()) {
-            return null;
-        }
+        List<Shift> shifts = getShifts(fromDate, endDate, workerId, jobId);
+        if (shifts.isEmpty()) return null;
 
         HashMap<Integer, BigDecimal> jobHourlyRateMap = createJobHourlyRateMap(shifts);
-        List<ShiftDTO> shiftDTOs = createShiftDTOs(shifts, workerId);
-        logger.info(shiftDTOs.toString());
 
-        BigDecimal grossPay = calculateGrossPay(shifts, jobHourlyRateMap, holidayMultiplier);
+        List<ShiftDTO> shiftDTOs = new ArrayList<>();
+        BigDecimal grossPay = BigDecimal.ZERO;
+        float totalHours = 0f;
 
-        // Get next shift
+        for (Shift shift : shifts) {
+            float hours = calculateShiftDuration(shift);
+            int jobIdKey = shift.getJob().getId();
+            BigDecimal hourlyRate = jobHourlyRateMap.get(jobIdKey);
+            BigDecimal bonus = shift.getIsHoliday() ? holidayMultiplier : BigDecimal.ONE;
+            BigDecimal money = BigDecimal.valueOf(hours).multiply(hourlyRate.multiply(bonus));
+
+            shiftDTOs.add(new ShiftDTO(
+                    workerId,
+                    jobIdKey,
+                    shift.getStartDate(),
+                    shift.getStartTime(),
+                    shift.getEndDate(),
+                    shift.getEndTime(),
+                    shift.getShiftType(),
+                    shift.getIsHoliday(),
+                    shift.getId(),
+                    money
+            ));
+
+            grossPay = grossPay.add(money);
+            totalHours += hours;
+        }
+
         Shift nextShift = shiftService.getNextShiftForWorker(workerId);
         ShiftDTO nextShiftDTO = null;
-        float nextShiftDuration = 0;
+        float nextShiftDuration = 0f;
         BigDecimal nextShiftPay = BigDecimal.ZERO;
 
         if (nextShift != null) {
-            ownershipVerifier.checkShiftOwnership(nextShift); // 🔐 Check shift belongs to current user
+            ownershipVerifier.checkShiftOwnership(nextShift);
 
-            List<Shift> nextShiftList = List.of(nextShift);
-            List<ShiftDTO> nextShiftDTOs = createShiftDTOs(nextShiftList, workerId);
-            nextShiftDTO = !nextShiftDTOs.isEmpty() ? nextShiftDTOs.get(0) : null;
+            int nextJobId = nextShift.getJob().getId();
+            BigDecimal hourlyRate = jobHourlyRateMap.getOrDefault(
+                    nextJobId,
+                    jobService.getJobById(nextJobId).getHourlyRate()
+            );
+            jobHourlyRateMap.putIfAbsent(nextJobId, hourlyRate);
 
-            if (nextShiftDTO != null) {
-                nextShiftDuration = calculateShiftDuration(nextShift);
+            BigDecimal bonus = nextShift.getIsHoliday() ? holidayMultiplier : BigDecimal.ONE;
+            nextShiftDuration = calculateShiftDuration(nextShift);
+            nextShiftPay = BigDecimal.valueOf(nextShiftDuration).multiply(hourlyRate.multiply(bonus));
 
-                int nextJobId = nextShift.getJob().getId();
-                BigDecimal hourlyRate = jobHourlyRateMap.containsKey(nextJobId)
-                        ? jobHourlyRateMap.get(nextJobId)
-                        : jobService.getJobById(nextJobId).getHourlyRate();
-
-                jobHourlyRateMap.putIfAbsent(nextJobId, hourlyRate);
-
-                BigDecimal bonusRate = nextShiftDTO.getIsHoliday() ? holidayMultiplier : BigDecimal.ONE;
-                nextShiftPay = new BigDecimal(nextShiftDuration).multiply(hourlyRate.multiply(bonusRate));
-            }
+            nextShiftDTO = new ShiftDTO(
+                    workerId,
+                    nextJobId,
+                    nextShift.getStartDate(),
+                    nextShift.getStartTime(),
+                    nextShift.getEndDate(),
+                    nextShift.getEndTime(),
+                    nextShift.getShiftType(),
+                    nextShift.getIsHoliday(),
+                    nextShift.getId(),
+                    nextShiftPay
+            );
         }
 
-        return new IncomeDTO(grossPay, shiftDTOs, nextShiftDTO, nextShiftDuration,
-                nextShiftPay, calculateTotalHours(shifts));
+        return new IncomeDTO(grossPay, shiftDTOs, nextShiftDTO, nextShiftDuration, nextShiftPay, totalHours);
     }
 
     // ——————————————————————————————— Internal Helpers ———————————————————————————————
@@ -112,65 +139,25 @@ public class IncomeService {
     }
 
     private HashMap<Integer, BigDecimal> createJobHourlyRateMap(List<Shift> shifts) {
-        HashMap<Integer, BigDecimal> jobHourlyRateMap = new HashMap<>();
-        for (Shift shift : shifts) {
-            jobHourlyRateMap.computeIfAbsent(
-                    shift.getJob().getId(),
-                    id -> jobService.getJobById(id).getHourlyRate()
-            );
-        }
-        return jobHourlyRateMap;
-    }
+        Set<Integer> jobIds = shifts.stream()
+                .map(shift -> shift.getJob().getId())
+                .collect(Collectors.toSet());
 
-    private List<ShiftDTO> createShiftDTOs(List<Shift> shifts, int workerId) {
-        List<ShiftDTO> shiftDTOs = new ArrayList<>();
-        BigDecimal holidayMultiplier = workerSettingsService.getSettingsByWorkerId(workerId).getPayMultiplier();
+        List<Job> jobs = jobService.getJobsByIds(jobIds);
 
-        for (Shift shift : shifts) {
-            BigDecimal duration = BigDecimal.valueOf(calculateShiftDuration(shift));
-            BigDecimal hourlyRate = jobService.getJobById(shift.getJob().getId()).getHourlyRate();
-            BigDecimal multiplier = shift.getIsHoliday() ? holidayMultiplier : BigDecimal.ONE;
-            BigDecimal moneyValue = duration.multiply(hourlyRate).multiply(multiplier);
-
-            shiftDTOs.add(new ShiftDTO(
-                    workerId,
-                    shift.getJob().getId(),
-                    shift.getStartDate(),
-                    shift.getStartTime(),
-                    shift.getEndDate(),
-                    shift.getEndTime(),
-                    shift.getShiftType(),
-                    shift.getIsHoliday(),
-                    shift.getId(),
-                    moneyValue
-            ));
-        }
-
-        return shiftDTOs;
-    }
-
-    private BigDecimal calculateGrossPay(List<Shift> shifts, HashMap<Integer, BigDecimal> jobHourlyRateMap, BigDecimal holidayMultiplier) {
-        BigDecimal grossPay = BigDecimal.ZERO;
-        for (Shift shift : shifts) {
-            BigDecimal bonusRate = shift.getIsHoliday() ? holidayMultiplier : BigDecimal.ONE;
-            BigDecimal jobHourlyRate = jobHourlyRateMap.get(shift.getJob().getId());
-            grossPay = grossPay.add(
-                    new BigDecimal(calculateShiftDuration(shift)).multiply(jobHourlyRate.multiply(bonusRate))
-            );
-        }
-        return grossPay;
-    }
-
-    private float calculateTotalHours(List<Shift> shifts) {
-        return (float) shifts.stream()
-                .mapToDouble(this::calculateShiftDuration)
-                .sum();
+        return jobs.stream()
+                .collect(Collectors.toMap(
+                        Job::getId,
+                        Job::getHourlyRate,
+                        (existing, replacement) -> existing,
+                        HashMap::new
+                ));
     }
 
     private float calculateShiftDuration(Shift shift) {
-        if (shift == null) return 0;
+        if (shift == null) return 0f;
         long minutes = ChronoUnit.MINUTES.between(shift.getStartTime(), shift.getEndTime());
         float hours = minutes / 60.0f;
-        return hours >= 5 ? hours - 0.5f : hours; //30 min break
+        return hours >= 5 ? hours - 0.5f : hours; // apply 30 min break if shift >= 5h
     }
 }
