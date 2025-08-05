@@ -12,7 +12,9 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class JobService {
@@ -23,7 +25,10 @@ public class JobService {
     private final OwnershipVerifier ownershipVerifier;
 
     @Autowired
-    public JobService(JobRepository jobRepository, EncryptionService encService, WorkerService workerService, OwnershipVerifier ownershipVerifier) {
+    public JobService(JobRepository jobRepository,
+                      EncryptionService encService,
+                      WorkerService workerService,
+                      OwnershipVerifier ownershipVerifier) {
         this.jobRepository = jobRepository;
         this.encryptionService = encService;
         this.workerService = workerService;
@@ -35,8 +40,7 @@ public class JobService {
 
         ArrayList<Job> jobs = jobRepository.findAllByWorkerId(workerId);
         for (Job job : jobs) {
-            job.setHourlyRate(new BigDecimal(encryptionService.decrypt(job.getEncryptedHourlyRate())));
-            job.setTitle(encryptionService.decrypt(job.getEncryptedTitle()));
+            decryptAndSetJobFields(job);
         }
 
         return jobs;
@@ -47,14 +51,19 @@ public class JobService {
 
         if (jobOpt.isPresent()) {
             Job job = jobOpt.get();
-
             ownershipVerifier.checkJobOwnership(job);
-
-            job.setHourlyRate(new BigDecimal(encryptionService.decrypt(job.getEncryptedHourlyRate())));
-            job.setTitle(encryptionService.decrypt(job.getEncryptedTitle()));
+            decryptAndSetJobFields(job);
             return job;
         }
         return null;
+    }
+
+    public List<Job> getJobsByIds(Set<Integer> jobIds) {
+        List<Job> jobs = jobRepository.findAllById(jobIds);
+        for (Job job : jobs) {
+            decryptAndSetJobFields(job);
+        }
+        return jobs;
     }
 
     public void addJob(Job job) {
@@ -65,13 +74,13 @@ public class JobService {
             }
 
             job.setEncryptedHourlyRate(encryptionService.encrypt(job.getHourlyRate().toString()));
-            job.setHourlyRate(null);
             job.setEncryptedTitle(encryptionService.encrypt(job.getTitle()));
+            job.setHourlyRate(null);
             job.setTitle(null);
 
             jobRepository.save(job);
         } catch (Exception e) {
-            System.out.println("Unexpected Error");
+            System.out.println("Unexpected Error in addJob()");
             e.printStackTrace();
         }
     }
@@ -82,9 +91,7 @@ public class JobService {
 
             if (optionalJob.isPresent()) {
                 Job jobToBeUpdated = optionalJob.get();
-
                 ownershipVerifier.checkJobOwnership(jobToBeUpdated);
-
                 Worker currentWorker = ownershipVerifier.getCurrentWorker();
 
                 jobToBeUpdated.setTitle(updatedJob.getTitle());
@@ -96,7 +103,7 @@ public class JobService {
                 jobRepository.save(jobToBeUpdated);
             }
         } catch (Exception e) {
-            System.out.println("Unexpected Error");
+            System.out.println("Unexpected Error in updateJob()");
             e.printStackTrace();
         }
     }
@@ -115,6 +122,21 @@ public class JobService {
             }
         } catch (Exception e) {
             System.out.println("Error deleting job.");
+            e.printStackTrace();
+        }
+    }
+
+    // 🔐 Reusable helper to decrypt and set title/hourly rate
+    private void decryptAndSetJobFields(Job job) {
+        try {
+            if (job.getEncryptedHourlyRate() != null) {
+                job.setHourlyRate(new BigDecimal(encryptionService.decrypt(job.getEncryptedHourlyRate())));
+            }
+            if (job.getEncryptedTitle() != null) {
+                job.setTitle(encryptionService.decrypt(job.getEncryptedTitle()));
+            }
+        } catch (Exception e) {
+            System.out.println("Failed to decrypt job fields for job ID: " + job.getId());
             e.printStackTrace();
         }
     }
