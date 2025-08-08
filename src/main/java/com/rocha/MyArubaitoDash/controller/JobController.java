@@ -65,7 +65,7 @@ public class JobController {
 
             jobService.addJob(job);
             logger.info("Job added successfully for Worker ID: {}", jobDTO.getWorkerId());
-            return new ResponseEntity<>("Job Added!", HttpStatus.OK);
+            return new ResponseEntity<>("Job Added!", HttpStatus.CREATED);
         } catch (Exception e) {
             logger.error("Error adding job: {}", e.getMessage(), e);
             return new ResponseEntity<>("Error adding job: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
