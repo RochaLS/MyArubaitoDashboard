@@ -47,7 +47,7 @@ public class JobController {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<String> addJob(@Valid @RequestBody JobDTO jobDTO) {
+    public ResponseEntity<?> addJob(@Valid @RequestBody JobDTO jobDTO) {
         logger.info("Request to add a job with details: {}", jobDTO);
         try {
             Worker worker = workerService.getWorkerById(jobDTO.getWorkerId());
@@ -63,9 +63,14 @@ public class JobController {
             job.setWorker(worker);
             job.setColorHex(jobDTO.getColorHex());
 
-            jobService.addJob(job);
+            Job savedJob = jobService.addJob(job);
+
+            // We need the following because these are null after saving.
+            savedJob.setTitle(jobDTO.getTitle());
+            savedJob.setHourlyRate(jobDTO.getHourlyRate());
+
             logger.info("Job added successfully for Worker ID: {}", jobDTO.getWorkerId());
-            return new ResponseEntity<>("Job Added!", HttpStatus.CREATED);
+            return new ResponseEntity<>(convertToDTO(savedJob), HttpStatus.CREATED);
         } catch (Exception e) {
             logger.error("Error adding job: {}", e.getMessage(), e);
             return new ResponseEntity<>("Error adding job: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -97,5 +102,16 @@ public class JobController {
             logger.error("Error deleting job with ID: {}: {}", id, e.getMessage(), e);
             return new ResponseEntity<>("Error deleting job: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private JobDTO convertToDTO(Job job) {
+        JobDTO dto = new JobDTO();
+        dto.setId(job.getId());
+        dto.setWorkerId(job.getWorker().getId());
+        dto.setColorHex(job.getColorHex());
+        // Since hourlyRate and title are encrypted and nulled in Job, you can either:
+        // - store the original values before encryption in the service and use them here, or
+        // - just send back whatever info you want (like ID and color)
+        return dto;
     }
 }

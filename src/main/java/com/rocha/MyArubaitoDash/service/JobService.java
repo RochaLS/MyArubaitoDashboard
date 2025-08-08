@@ -66,7 +66,7 @@ public class JobService {
         return jobs;
     }
 
-    public void addJob(Job job) {
+    public Job addJob(Job job) {
         try {
             Worker currentWorker = ownershipVerifier.getCurrentWorker();
             if (job.getWorker() == null || job.getWorker().getId() != currentWorker.getId()) {
@@ -78,11 +78,13 @@ public class JobService {
             job.setHourlyRate(null);
             job.setTitle(null);
 
-            jobRepository.save(job);
+           return jobRepository.save(job);
         } catch (Exception e) {
             System.out.println("Unexpected Error in addJob()");
             e.printStackTrace();
         }
+
+        return null;
     }
 
     public void updateJob(int id, JobDTO updatedJob) {
