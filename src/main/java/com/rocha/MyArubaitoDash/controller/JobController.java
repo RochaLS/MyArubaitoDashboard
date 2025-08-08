@@ -109,9 +109,8 @@ public class JobController {
         dto.setId(job.getId());
         dto.setWorkerId(job.getWorker().getId());
         dto.setColorHex(job.getColorHex());
-        // Since hourlyRate and title are encrypted and nulled in Job, you can either:
-        // - store the original values before encryption in the service and use them here, or
-        // - just send back whatever info you want (like ID and color)
+        dto.setTitle(job.getTitle());
+        dto.setHourlyRate(job.getHourlyRate());
         return dto;
     }
 }
