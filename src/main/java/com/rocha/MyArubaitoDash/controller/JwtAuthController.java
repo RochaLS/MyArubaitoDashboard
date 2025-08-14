@@ -73,7 +73,7 @@ public class JwtAuthController {
 
             // Generate token
             final String token = jwtTokenUtil.generateToken(userDetails.getUsername(), worker.getId());
-            return ResponseEntity.ok(new JwtResponse(token));
+            return ResponseEntity.ok(new JwtResponse(token, false));
 
         } catch (AuthenticationException e) {
             // Log failure
@@ -93,7 +93,7 @@ public class JwtAuthController {
                 Worker worker = workerRepository.findWorkerByEmail(email);
                 final String newToken = jwtTokenUtil.generateToken(email, worker.getId());
                 logger.info("Token refreshed successfully for user: {}", email);
-                return ResponseEntity.ok(new JwtResponse(newToken));
+                return ResponseEntity.ok(new JwtResponse(newToken, false));
             }
 
             logger.warn("Invalid token provided for refresh.");
@@ -137,6 +137,8 @@ public class JwtAuthController {
             String appleUserId = claims.getSubject();
             String email = claims.getStringClaim("email");
 
+            boolean isNewUser = false;
+
             // Log successful validation
             logger.info("Apple ID token successfully validated. UserId: {}, Email: {}", appleUserId, email);
 
@@ -146,6 +148,7 @@ public class JwtAuthController {
             if (worker == null) {
                 // Register the user if they don't exist
                 logger.info("Worker not found, creating new worker with email: {}", email);
+                isNewUser = true;
                 worker = new Worker();
                 worker.setEmail(email);
                 String nameFromEmail = email.split("@")[0];
@@ -158,7 +161,8 @@ public class JwtAuthController {
             String token = jwtTokenUtil.generateToken(worker.getEmail(), worker.getId());
 
             logger.info("Generated JWT token for Apple user: {}", appleUserId);
-            return ResponseEntity.ok(new JwtResponse(token));
+
+            return ResponseEntity.ok(new JwtResponse(token, isNewUser));
 
         } catch (Exception e) {
             logger.error("Apple login failed. Reason: {}", e.getMessage());

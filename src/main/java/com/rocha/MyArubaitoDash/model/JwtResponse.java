@@ -7,11 +7,19 @@ public class JwtResponse implements Serializable {
 
     private final String token;
 
-    public JwtResponse(String token) {
+    private final boolean isNewUser;
+
+    public JwtResponse(String token, boolean isNewUser) {
         this.token = token;
+        this.isNewUser = isNewUser;
     }
 
     public String getToken() {
         return token;
+    }
+
+
+    public boolean getIsNewUser() {
+        return isNewUser;
     }
 }
