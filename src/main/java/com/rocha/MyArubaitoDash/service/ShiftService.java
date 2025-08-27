@@ -4,19 +4,16 @@ import com.rocha.MyArubaitoDash.dto.ShiftDTO;
 import com.rocha.MyArubaitoDash.model.Job;
 import com.rocha.MyArubaitoDash.model.Shift;
 import com.rocha.MyArubaitoDash.model.Worker;
-import com.rocha.MyArubaitoDash.repository.JobRepository;
+import com.rocha.MyArubaitoDash.model.WorkerSettings;
 import com.rocha.MyArubaitoDash.repository.ShiftRepository;
-import com.rocha.MyArubaitoDash.repository.WorkerRepository;
 import com.rocha.MyArubaitoDash.util.OwnershipVerifier;
+import com.rocha.MyArubaitoDash.util.ShiftHelper;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -24,8 +21,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ShiftService {
@@ -34,18 +31,39 @@ public class ShiftService {
     private final JobService jobService;
     private final EncryptionService encryptionService;
     private final OwnershipVerifier ownershipVerifier;
+    private final WorkerSettingsService workerSettingsService;
+    private final ShiftHelper shiftHelper;
 
     @Autowired
     public ShiftService(
             ShiftRepository shiftRepository,
             JobService jobService,
             EncryptionService encryptionService,
-            OwnershipVerifier ownershipVerifier
+            OwnershipVerifier ownershipVerifier,
+            ShiftHelper shiftHelper,
+            WorkerSettingsService workerSettingsService
     ) {
         this.shiftRepository = shiftRepository;
         this.jobService = jobService;
         this.encryptionService = encryptionService;
         this.ownershipVerifier = ownershipVerifier;
+        this.workerSettingsService = workerSettingsService;
+        this.shiftHelper = shiftHelper;
+    }
+
+    public List<ShiftDTO> getShiftsFromRange(LocalDate fromDate, LocalDate endDate, int workerId) {
+        List<Shift> shifts =  shiftRepository.getAllShiftsInRangeWithJob(workerId, fromDate, endDate);
+        if (shifts.isEmpty()) {
+            return Collections.emptyList();
+        }
+        ownershipVerifier.checkShiftOwnership(shifts.get(0));
+        List<Shift> decryptedShifts = decryptShifts(shifts);
+
+        BigDecimal holidayMultiplier = workerSettingsService.getSettingsByWorkerId(workerId).getPayMultiplier();
+
+        return shiftHelper.createShiftDTOs(decryptedShifts, workerId, holidayMultiplier, shiftHelper.getJobMapForShifts(decryptedShifts));
+
+
     }
 
     public ArrayList<Shift> getShiftsByJobId(int jobId) {
@@ -168,6 +186,22 @@ public class ShiftService {
         shift.setIsHoliday(dto.getIsHoliday());
         return shift;
     }
+
+//    private ShiftDTO convertToDTO(Shift shift) {
+//        BigDecimal duration = BigDecimal.valueOf(calculateShiftDuration(shift));
+//        ShiftDTO dto = new ShiftDTO();
+//        dto.setId(shift.getId());
+//        dto.setWorkerId(shift.getWorker().getId());
+//        dto.setJobId(shift.getJob() != null ? shift.getJob().getId() : null);
+//        dto.setStartDate(shift.getStartDate());
+//        dto.setStartTime(shift.getStartTime());
+//        dto.setEndDate(shift.getEndDate());
+//        dto.setEndTime(shift.getEndTime());
+//        dto.setShiftType(shift.getShiftType());
+//        dto.setIsHoliday(shift.getIsHoliday());
+//        dto.setMoneyValue(shift.getMoneyValue());
+//        return dto;
+//    }
 
     private List<Shift> decryptShifts(List<Shift> shifts) {
         for (Shift shift : shifts) {

@@ -1,19 +1,17 @@
 package com.rocha.MyArubaitoDash.service;
 
-import com.rocha.MyArubaitoDash.controller.IncomeController;
 import com.rocha.MyArubaitoDash.dto.IncomeDTO;
 import com.rocha.MyArubaitoDash.dto.ShiftDTO;
 import com.rocha.MyArubaitoDash.model.Job;
 import com.rocha.MyArubaitoDash.model.Shift;
 import com.rocha.MyArubaitoDash.util.OwnershipVerifier;
+import com.rocha.MyArubaitoDash.util.ShiftHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.chrono.ChronoLocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
@@ -27,6 +25,7 @@ public class IncomeService {
     private final JobService jobService;
     private final WorkerSettingsService workerSettingsService;
     private final OwnershipVerifier ownershipVerifier;
+    private final ShiftHelper shiftHelper;
 
     private static final Logger logger = LoggerFactory.getLogger(IncomeService.class);
 
@@ -34,11 +33,12 @@ public class IncomeService {
     public IncomeService(ShiftService shiftService,
                          JobService jobService,
                          WorkerSettingsService workerSettingsService,
-                         OwnershipVerifier ownershipVerifier) {
+                         OwnershipVerifier ownershipVerifier, ShiftHelper shiftHelper) {
         this.shiftService = shiftService;
         this.jobService = jobService;
         this.workerSettingsService = workerSettingsService;
         this.ownershipVerifier = ownershipVerifier;
+        this.shiftHelper = shiftHelper;
     }
 
     public IncomeDTO geIncomeDataFor(LocalDate fromDate, LocalDate endDate, int workerId, int jobId) {
@@ -59,8 +59,8 @@ public class IncomeService {
             return null;
         }
 
-        Map<Integer, Job> jobMap = getJobMapForShifts(shifts);
-        List<ShiftDTO> shiftDTOs = createShiftDTOs(shifts, workerId, holidayMultiplier, jobMap);
+        Map<Integer, Job> jobMap = shiftHelper.getJobMapForShifts(shifts);
+        List<ShiftDTO> shiftDTOs = shiftHelper.createShiftDTOs(shifts, workerId, holidayMultiplier, jobMap);
 
         BigDecimal grossPay = calculateGrossPay(shifts, holidayMultiplier, jobMap);
         float totalHours = calculateTotalHours(shifts);
@@ -76,7 +76,9 @@ public class IncomeService {
             Job nextJob = jobService.getJobById(nextShift.getJob().getId()); // fetch once
             jobMap.putIfAbsent(nextJob.getId(), nextJob);
 
-            List<ShiftDTO> nextShiftDTOs = createShiftDTOs(List.of(nextShift), workerId, holidayMultiplier, jobMap);
+            List<ShiftDTO> nextShiftDTOs = shiftHelper.createShiftDTOs(
+                    List.of(nextShift), workerId, holidayMultiplier, jobMap
+            );
             nextShiftDTO = !nextShiftDTOs.isEmpty() ? nextShiftDTOs.get(0) : null;
 
             if (nextShiftDTO != null) {
@@ -104,41 +106,41 @@ public class IncomeService {
         }
     }
 
-    private Map<Integer, Job> getJobMapForShifts(List<Shift> shifts) {
-        Set<Integer> jobIds = shifts.stream()
-                .map(shift -> shift.getJob().getId())
-                .collect(Collectors.toSet());
+//    public Map<Integer, Job> getJobMapForShifts(List<Shift> shifts) {
+//        Set<Integer> jobIds = shifts.stream()
+//                .map(shift -> shift.getJob().getId())
+//                .collect(Collectors.toSet());
+//
+//        List<Job> jobs = jobService.getJobsByIds(jobIds); // You need to implement this
+//        return jobs.stream().collect(Collectors.toMap(Job::getId, Function.identity()));
+//    }
 
-        List<Job> jobs = jobService.getJobsByIds(jobIds); // You need to implement this
-        return jobs.stream().collect(Collectors.toMap(Job::getId, Function.identity()));
-    }
-
-    private List<ShiftDTO> createShiftDTOs(List<Shift> shifts, int workerId, BigDecimal holidayMultiplier, Map<Integer, Job> jobMap) {
-        List<ShiftDTO> shiftDTOs = new ArrayList<>();
-
-        for (Shift shift : shifts) {
-            BigDecimal duration = BigDecimal.valueOf(calculateShiftDuration(shift));
-            Job job = jobMap.get(shift.getJob().getId());
-            BigDecimal hourlyRate = job.getHourlyRate();
-            BigDecimal multiplier = shift.getIsHoliday() ? holidayMultiplier : BigDecimal.ONE;
-            BigDecimal moneyValue = duration.multiply(hourlyRate).multiply(multiplier);
-
-            shiftDTOs.add(new ShiftDTO(
-                    workerId,
-                    job.getId(),
-                    shift.getStartDate(),
-                    shift.getStartTime(),
-                    shift.getEndDate(),
-                    shift.getEndTime(),
-                    shift.getShiftType(),
-                    shift.getIsHoliday(),
-                    shift.getId(),
-                    moneyValue
-            ));
-        }
-
-        return shiftDTOs;
-    }
+//    public List<ShiftDTO> createShiftDTOs(List<Shift> shifts, int workerId, BigDecimal holidayMultiplier, Map<Integer, Job> jobMap) {
+//        List<ShiftDTO> shiftDTOs = new ArrayList<>();
+//
+//        for (Shift shift : shifts) {
+//            BigDecimal duration = BigDecimal.valueOf(calculateShiftDuration(shift));
+//            Job job = jobMap.get(shift.getJob().getId());
+//            BigDecimal hourlyRate = job.getHourlyRate();
+//            BigDecimal multiplier = shift.getIsHoliday() ? holidayMultiplier : BigDecimal.ONE;
+//            BigDecimal moneyValue = duration.multiply(hourlyRate).multiply(multiplier);
+//
+//            shiftDTOs.add(new ShiftDTO(
+//                    workerId,
+//                    job.getId(),
+//                    shift.getStartDate(),
+//                    shift.getStartTime(),
+//                    shift.getEndDate(),
+//                    shift.getEndTime(),
+//                    shift.getShiftType(),
+//                    shift.getIsHoliday(),
+//                    shift.getId(),
+//                    moneyValue
+//            ));
+//        }
+//
+//        return shiftDTOs;
+//    }
 
     private BigDecimal calculateGrossPay(List<Shift> shifts, BigDecimal holidayMultiplier, Map<Integer, Job> jobMap) {
         BigDecimal grossPay = BigDecimal.ZERO;

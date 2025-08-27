@@ -97,6 +97,30 @@ public class ShiftController {
         return new ResponseEntity<>("Shift not found", HttpStatus.NOT_FOUND);
     }
 
+    @GetMapping("/range")
+    public ResponseEntity<?> getShiftsInRange(
+            @RequestParam LocalDate fromDate,
+            @RequestParam LocalDate endDate,
+            @RequestParam int workerId) {
+
+        logger.info("Fetching shifts for worker ID: {} from {} to {}", workerId, fromDate, endDate);
+
+        try {
+            List<ShiftDTO> shifts = shiftService.getShiftsFromRange(fromDate, endDate, workerId);
+
+            if (shifts != null && !shifts.isEmpty()) {
+                logger.info("Found {} shifts for worker ID: {} in date range", shifts.size(), workerId);
+                return ResponseEntity.ok(shifts);
+            }
+
+            logger.warn("No shifts found for worker ID: {} in date range {} to {}", workerId, fromDate, endDate);
+            return new ResponseEntity<>("No shifts found in the specified range", HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            logger.error("Error fetching shifts for worker ID: {} in date range: {}", workerId, e.getMessage());
+            return new ResponseEntity<>("Error retrieving shifts", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @PostMapping("/add")
     public ResponseEntity<String> addShift(@RequestBody @Valid ShiftDTO shiftDTO) {
         logger.info("Adding a new shift: {}", shiftDTO);
