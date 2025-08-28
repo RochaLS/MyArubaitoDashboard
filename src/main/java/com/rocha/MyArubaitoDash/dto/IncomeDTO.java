@@ -15,7 +15,12 @@ public class IncomeDTO {
     @ToString.Exclude
     private BigDecimal totalGrossPay;
 
-    private List<ShiftDTO> shifts;
+    private int shiftCount;
+
+    private int openingCount;
+    private int midCount;
+    private int closingCount;
+    private int completedShifts;
 
     private ShiftDTO nextShift;
 

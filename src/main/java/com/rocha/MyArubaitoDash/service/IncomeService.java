@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
@@ -60,7 +61,7 @@ public class IncomeService {
         }
 
         Map<Integer, Job> jobMap = shiftHelper.getJobMapForShifts(shifts);
-        List<ShiftDTO> shiftDTOs = shiftHelper.createShiftDTOs(shifts, workerId, holidayMultiplier, jobMap);
+//        List<ShiftDTO> shiftDTOs = shiftHelper.createShiftDTOs(shifts, workerId, holidayMultiplier, jobMap);
 
         BigDecimal grossPay = calculateGrossPay(shifts, holidayMultiplier, jobMap);
         float totalHours = calculateTotalHours(shifts);
@@ -89,7 +90,39 @@ public class IncomeService {
             }
         }
 
-        return new IncomeDTO(grossPay, shiftDTOs, nextShiftDTO, nextShiftDuration, nextShiftPay, totalHours);
+        // Count openings, mids, closings
+        int openingCount = 0;
+        int midCount = 0;
+        int closingCount = 0;
+        int completedShifts = 0;
+
+        LocalDateTime now = LocalDateTime.now();
+
+        for (Shift shift : shifts) {
+            String type = shift.getShiftType();
+            if (type == null) continue;
+
+            switch (type.toLowerCase()) {
+                case "opening":
+                    openingCount++;
+                    break;
+                case "mid":
+                    midCount++;
+                    break;
+                case "closing":
+                    closingCount++;
+                    break;
+            }
+
+            LocalDateTime shiftEnd = LocalDateTime.of(shift.getEndDate(), shift.getEndTime());
+            if (shiftEnd.isBefore(now)) {
+                completedShifts++;
+            }
+        }
+
+
+
+        return new IncomeDTO(grossPay, shifts.size(), openingCount, midCount, closingCount, completedShifts, nextShiftDTO, nextShiftDuration, nextShiftPay, totalHours);
     }
 
     // ———————————————————— Internal Helpers ————————————————————
