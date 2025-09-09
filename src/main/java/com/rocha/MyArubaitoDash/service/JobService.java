@@ -88,6 +88,7 @@ public class JobService {
     }
 
     public void updateJob(int id, JobDTO updatedJob) {
+        System.out.println("DTO hasSetStoreHours: " + updatedJob.getHasSetStoreHours());
         try {
             Optional<Job> optionalJob = jobRepository.findById(id);
 
@@ -101,6 +102,9 @@ public class JobService {
                 jobToBeUpdated.setWorker(currentWorker);
                 jobToBeUpdated.setEncryptedHourlyRate(encryptionService.encrypt(updatedJob.getHourlyRate().toString()));
                 jobToBeUpdated.setEncryptedTitle(encryptionService.encrypt(updatedJob.getTitle()));
+                jobToBeUpdated.setOpeningTime(updatedJob.getOpeningTime());
+                jobToBeUpdated.setClosingTime(updatedJob.getClosingTime());
+                jobToBeUpdated.setHasSetStoreHours(updatedJob.getHasSetStoreHours());
 
                 jobRepository.save(jobToBeUpdated);
             }

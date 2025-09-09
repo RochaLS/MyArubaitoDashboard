@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.math.BigDecimal;
+import java.time.LocalTime;
 import java.util.List;
 
 @Data
@@ -48,6 +49,10 @@ public class Job {
 
     @Column(name = "color_hex")
     private String colorHex;
+
+    private LocalTime openingTime;
+    private LocalTime closingTime;
+    private boolean hasSetStoreHours;
 
 }
 

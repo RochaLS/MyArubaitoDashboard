@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.math.BigDecimal;
+import java.time.LocalTime;
 
 @Data
 @AllArgsConstructor
@@ -30,4 +31,8 @@ public class JobDTO {
     private Integer workerId; // was int previously had to use the wrapper to apply validation
 
     private String colorHex;
+
+    private LocalTime openingTime;
+    private LocalTime closingTime;
+    private Boolean hasSetStoreHours;
 }
