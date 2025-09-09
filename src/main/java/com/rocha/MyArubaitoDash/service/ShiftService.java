@@ -1,5 +1,6 @@
 package com.rocha.MyArubaitoDash.service;
 
+import com.rocha.MyArubaitoDash.controller.IncomeController;
 import com.rocha.MyArubaitoDash.dto.ShiftDTO;
 import com.rocha.MyArubaitoDash.model.Job;
 import com.rocha.MyArubaitoDash.model.Shift;
@@ -9,6 +10,8 @@ import com.rocha.MyArubaitoDash.repository.ShiftRepository;
 import com.rocha.MyArubaitoDash.util.OwnershipVerifier;
 import com.rocha.MyArubaitoDash.util.ShiftHelper;
 import jakarta.persistence.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -19,6 +22,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,6 +37,8 @@ public class ShiftService {
     private final OwnershipVerifier ownershipVerifier;
     private final WorkerSettingsService workerSettingsService;
     private final ShiftHelper shiftHelper;
+
+    private static final Logger logger = LoggerFactory.getLogger(ShiftService.class);
 
     @Autowired
     public ShiftService(
@@ -93,6 +99,40 @@ public class ShiftService {
 
         Shift shift = convertDTOToEntity(shiftDTO);
         shift.setWorker(currentWorker);
+
+        LocalTime start = shift.getStartTime();
+        LocalTime end = shift.getEndTime();
+
+        if (start.equals(job.getOpeningTime())) {
+            shift.setShiftType("Opening");
+        } else if (end.equals(job.getClosingTime())) {
+            shift.setShiftType("Closing");
+        } else {
+            shift.setShiftType("Mid");
+        }
+
+        logger.info("Assigning shift type for shift: start={}, end={}, jobOpening={}, jobClosing={}",
+                start, end, job.getOpeningTime(), job.getClosingTime());
+
+
+        if (job.isHasSetStoreHours()) {
+            if (job.getOpeningTime() != null && !start.isAfter(job.getOpeningTime())) {
+                shift.setShiftType("Opening");
+                logger.info("Shift type assigned: Opening (starts before or at opening)");
+            } else if (job.getClosingTime() != null && !end.isBefore(job.getClosingTime())) {
+                shift.setShiftType("Closing");
+                logger.info("Shift type assigned: Closing (ends after or at closing)");
+            } else {
+                shift.setShiftType("Mid");
+                logger.info("Shift type assigned: Mid (does not match opening or closing)");
+            }
+        } else {
+            shift.setShiftType("Not Specified");
+        }
+
+
+
+
         shift.setJob(job);
         calculateAndSetMoney(shift, job);
 
@@ -117,7 +157,32 @@ public class ShiftService {
         shift.setEndDate(shiftDTO.getEndDate());
         shift.setShiftType(shiftDTO.getShiftType());
         shift.setIsHoliday(shiftDTO.getIsHoliday());
+
+
         shift.setJob(job);
+
+        LocalTime start = shift.getStartTime();
+        LocalTime end = shift.getEndTime();
+
+        logger.info("Assigning shift type for shift: start={}, end={}, jobOpening={}, jobClosing={}",
+                start, end, job.getOpeningTime(), job.getClosingTime());
+
+
+
+        if (job.isHasSetStoreHours()) {
+            if (job.getOpeningTime() != null && !start.isAfter(job.getOpeningTime())) {
+                shift.setShiftType("Opening");
+                logger.info("Shift type assigned: Opening (starts before or at opening)");
+            } else if (job.getClosingTime() != null && !end.isBefore(job.getClosingTime())) {
+                shift.setShiftType("Closing");
+                logger.info("Shift type assigned: Closing (ends after or at closing)");
+            } else {
+                shift.setShiftType("Mid");
+                logger.info("Shift type assigned: Mid (does not match opening or closing)");
+            }
+        } else {
+            shift.setShiftType("Not Specified");
+        }
 
         calculateAndSetMoney(shift, job);
         shiftRepository.save(shift);

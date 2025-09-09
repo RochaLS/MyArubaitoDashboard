@@ -62,6 +62,9 @@ public class JobController {
             job.setHourlyRate(jobDTO.getHourlyRate());
             job.setWorker(worker);
             job.setColorHex(jobDTO.getColorHex());
+            job.setHasSetStoreHours(job.isHasSetStoreHours());
+            job.setOpeningTime(jobDTO.getOpeningTime());
+            job.setClosingTime(jobDTO.getClosingTime());
 
             Job savedJob = jobService.addJob(job);
 
