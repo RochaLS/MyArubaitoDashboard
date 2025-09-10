@@ -115,16 +115,16 @@ public class ShiftService {
                 start, end, job.getOpeningTime(), job.getClosingTime());
 
 
-        if (job.isHasSetStoreHours()) {
-            if (job.getOpeningTime() != null && !start.isAfter(job.getOpeningTime())) {
+        if (job.isHasSetStoreHours() && job.getOpeningTime() != null && job.getClosingTime() != null) {
+            if (start.isBefore(job.getOpeningTime())) {
                 shift.setShiftType("Opening");
-                logger.info("Shift type assigned: Opening (starts before or at opening)");
-            } else if (job.getClosingTime() != null && !end.isBefore(job.getClosingTime())) {
+                logger.info("Shift type assigned: Opening (starts before opening)");
+            } else if (!end.isBefore(job.getClosingTime())) {
                 shift.setShiftType("Closing");
-                logger.info("Shift type assigned: Closing (ends after or at closing)");
+                logger.info("Shift type assigned: Closing (ends at or after closing)");
             } else {
                 shift.setShiftType("Mid");
-                logger.info("Shift type assigned: Mid (does not match opening or closing)");
+                logger.info("Shift type assigned: Mid (starts at/after opening and ends before closing)");
             }
         } else {
             shift.setShiftType("Not Specified");
@@ -169,16 +169,16 @@ public class ShiftService {
 
 
 
-        if (job.isHasSetStoreHours()) {
-            if (job.getOpeningTime() != null && !start.isAfter(job.getOpeningTime())) {
+        if (job.isHasSetStoreHours() && job.getOpeningTime() != null && job.getClosingTime() != null) {
+            if (start.isBefore(job.getOpeningTime())) {
                 shift.setShiftType("Opening");
-                logger.info("Shift type assigned: Opening (starts before or at opening)");
-            } else if (job.getClosingTime() != null && !end.isBefore(job.getClosingTime())) {
+                logger.info("Shift type assigned: Opening (starts before opening)");
+            } else if (!end.isBefore(job.getClosingTime())) {
                 shift.setShiftType("Closing");
-                logger.info("Shift type assigned: Closing (ends after or at closing)");
+                logger.info("Shift type assigned: Closing (ends at or after closing)");
             } else {
                 shift.setShiftType("Mid");
-                logger.info("Shift type assigned: Mid (does not match opening or closing)");
+                logger.info("Shift type assigned: Mid (starts at/after opening and ends before closing)");
             }
         } else {
             shift.setShiftType("Not Specified");
