@@ -65,6 +65,26 @@ public class ShiftController {
         return ResponseEntity.ok(uniqueShifts);
     }
 
+    @PostMapping("checkDuplicateShiftsByWorker/{workerId}")
+    public ResponseEntity<?> getShiftsByWorkerId(@PathVariable int workerId, @RequestBody ArrayList<ShiftDTO> shiftDTOs) {
+        logger.info("Checking for duplicate shifts for worker ID: {}", workerId);
+        List<Shift> shiftsInDB = shiftService.getShiftsByWorkerId(workerId);
+        Set<LocalDate> startDateSetInDB = shiftsInDB.stream()
+                .map(Shift::getStartDate)
+                .collect(Collectors.toSet());
+
+        List<ShiftDTO> uniqueShifts = shiftDTOs.stream()
+                .filter(importedShift -> {
+                    LocalDate startDate = importedShift.getStartDate();
+                    logger.debug("Checking date: {}", startDate);
+                    return !startDateSetInDB.contains(startDate);
+                }).sorted(Comparator.comparing(ShiftDTO::getStartDate)).collect(Collectors.toList());
+
+        logger.info("Found {} unique shifts for worker ID: {}", uniqueShifts.size(), workerId);
+        return ResponseEntity.ok(uniqueShifts);
+
+    }
+
     @GetMapping("byWorker-paginated/{id}")
     public ResponseEntity<?> getShiftByWorkerFromDate(
             @RequestParam("date") LocalDate date,
