@@ -89,6 +89,15 @@ docker compose up --build
 
 The API listens on `http://localhost:8080`. MySQL listens on `localhost:3306` (database `myarubaito`, user `myarubaito`, password `local-app-password`). The first start creates the tables (`DDL_AUTO=update`).
 
+Password-reset email is the only feature that needs SMTP, and the API starts without it. To turn it on locally, create a `.env` file next to `docker-compose.yml`. That filename is already in `.gitignore`, so the values stay on your machine:
+
+```
+SPRING_MAIL_USERNAME=your-gmail-address
+SPRING_MAIL_PASSWORD=your-gmail-app-password
+```
+
+Compose substitutes those into the app container. Leave the file out, or leave the values empty, and everything except sending a reset email still works.
+
 A request that reaches the app without a token gets a JSON 401, which is enough to confirm it booted:
 
 ```bash

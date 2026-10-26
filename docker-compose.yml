@@ -57,8 +57,9 @@ services:
       AWS_SECRET_ACCESS_KEY: local-dev-only
       SPRING_MAIL_HOST: smtp.gmail.com
       SPRING_MAIL_PORT: "587"
-      SPRING_MAIL_USERNAME: local@example.com
-      SPRING_MAIL_PASSWORD: local-dev-only
+      # Optional. Empty unless a gitignored .env sets them. Only password-reset mail needs them.
+      SPRING_MAIL_USERNAME: "${SPRING_MAIL_USERNAME:-}"
+      SPRING_MAIL_PASSWORD: "${SPRING_MAIL_PASSWORD:-}"
       GEMINI_API_KEY: local-dev-only
       JWT_SECRET: local-dev-only-jwt-secret-32bytes
       JWT_EXPIRATION: "3600"
