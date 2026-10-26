@@ -2,7 +2,6 @@ package com.rocha.MyArubaitoDash.service;
 
 
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.regions.Regions;
 import com.amazonaws.services.kms.AWSKMS;
 import com.amazonaws.services.kms.AWSKMSClientBuilder;
 import com.amazonaws.services.kms.model.DecryptRequest;
@@ -24,10 +23,10 @@ public class EncryptionService {
     @Value("${aws.kms.cmkArn}")
     private String kmsKeyId; // ARN of the CMK
 
-    public EncryptionService() {
+    public EncryptionService(@Value("${aws.region:us-east-2}") String awsRegion) {
         this.kmsClient = AWSKMSClientBuilder.standard()
                 .withCredentials(DefaultAWSCredentialsProviderChain.getInstance())
-                .withRegion(Regions.US_EAST_2) // Specify the correct region
+                .withRegion(awsRegion)
                 .build();
     }
 

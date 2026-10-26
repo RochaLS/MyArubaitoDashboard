@@ -1,0 +1,71 @@
+# Local testing, and a picture of the two processes the VPS will run.
+# Passwords below are for a laptop only. Do not reuse them on Hetzner.
+# On the VPS, prefer Coolify's own MySQL database (see MIGRATION.md) so
+# scheduled backups work. This file is the reference for the settings.
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: local-root-password
+      MYSQL_DATABASE: myarubaito
+      MYSQL_USER: myarubaito
+      MYSQL_PASSWORD: local-app-password
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      # Sized for a 4 GB machine that also runs the API and Coolify.
+      - --innodb-buffer-pool-size=256M
+      - --performance-schema=OFF
+      - --max-connections=40
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    mem_limit: 768m
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-plocal-root-password"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    mem_limit: 1024m
+    environment:
+      # Same variable names the app already uses on Railway.
+      DATABASE_URL: jdbc:mysql://mysql:3306/myarubaito?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+      DATABASE_USER: myarubaito
+      DATABASE_PASSWORD: local-app-password
+      DDL_AUTO: update
+      APP_PROFILE: local
+      SESSION_COOKIE_SECURE: "false"
+      COOKIE_DOMAIN_NAME: localhost
+      ALLOWED_ORIGINS: http://localhost:3000
+      SERVER_FORWARD_HEADERS_STRATEGY: none
+      AWS_REGION: us-east-2
+      AWS_KMS_CMK_ARN: arn:aws:kms:us-east-2:000000000000:key/local-dev-only
+      AWS_ACCESS_KEY_ID: local-dev-only
+      AWS_SECRET_ACCESS_KEY: local-dev-only
+      SPRING_MAIL_HOST: smtp.gmail.com
+      SPRING_MAIL_PORT: "587"
+      SPRING_MAIL_USERNAME: local@example.com
+      SPRING_MAIL_PASSWORD: local-dev-only
+      GEMINI_API_KEY: local-dev-only
+      JWT_SECRET: local-dev-only-jwt-secret-32bytes
+      JWT_EXPIRATION: "3600"
+      RESET_PASSWORD_URL: http://localhost:3000/reset-password
+      HIKARI_MAXIMUM_POOL_SIZE: "5"
+      HIKARI_MINIMUM_IDLE: "1"
+      JAVA_OPTS: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=60.0 -XX:InitialRAMPercentage=20.0 -XX:MaxRAM=1024m -XX:MaxMetaspaceSize=192m -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError -Djava.security.egd=file:/dev/urandom"
+
+volumes:
+  mysql_data:
