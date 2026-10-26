@@ -79,6 +79,37 @@ See upcoming shifts, pay projections, and job summaries at a glance.
 - Encrypted user data using **AWS KMS**  
 - HTTPS enforced end-to-end
 
+## 🐳 Run the API locally with Docker
+
+The frontend is a separate Next.js app. This repo is the API and it needs MySQL. Docker Compose starts both, with local-only passwords from `docker-compose.yml`.
+
+```bash
+docker compose up --build
+```
+
+The API listens on `http://localhost:8080`. MySQL listens on `localhost:3306` (database `myarubaito`, user `myarubaito`, password `local-app-password`). The first start creates the tables (`DDL_AUTO=update`).
+
+Password-reset email is the only feature that needs SMTP, and the API starts without it. To turn it on locally, create a `.env` file next to `docker-compose.yml`. That filename is already in `.gitignore`, so the values stay on your machine:
+
+```
+SPRING_MAIL_USERNAME=your-gmail-address
+SPRING_MAIL_PASSWORD=your-gmail-app-password
+```
+
+Compose substitutes those into the app container. Leave the file out, or leave the values empty, and everything except sending a reset email still works.
+
+A request that reaches the app without a token gets a JSON 401, which is enough to confirm it booted:
+
+```bash
+curl -i http://localhost:8080/api/validate-session?userId=0
+```
+
+Stop it with `docker compose down`. Add `-v` if you also want to delete the local database volume.
+
+`mvnw` still works for unit tests (`./mvnw test`). The full Spring context test needs the same environment variables as a real run, so it does not pass on a bare checkout.
+
+To host this on a small VPS instead of Railway, follow [MIGRATION.md](MIGRATION.md).
+
 
 
 ## 🔧 Architecture Overview  
